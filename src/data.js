@@ -33,7 +33,7 @@ export const planets = [
     rotationHours: 1407.6,
     tilt: 0.03,
     L0: 252.2503,
-    surface: { type: 'rocky', colors: ['#4a4643', '#8f8780', '#b9b1a8'], seed: 1.3 },
+    surface: { type: 'map', map: 'textures/mercury.jpg' },
     description:
       'The smallest planet and the closest to the Sun. With almost no atmosphere, its surface swings from about 430 °C by day to −180 °C at night.',
     facts: [
@@ -56,14 +56,8 @@ export const planets = [
     rotationHours: -5832.5,
     tilt: 177.4,
     L0: 181.9791,
-    surface: {
-      type: 'gas',
-      colors: ['#b8894a', '#e8d3a2', '#f3e6c4'],
-      bands: 4,
-      turbulence: 6,
-      seed: 2.7,
-      atmosphere: { color: '#ffd9a0', strength: 0.6 },
-    },
+    // Venus's cloud tops, not the radar-mapped ground hidden beneath them
+    surface: { type: 'map', map: 'textures/venus_atmosphere.jpg', atmosphere: { color: '#ffd9a0', strength: 0.6 } },
     description:
       'Similar in size to Earth but wrapped in thick clouds of sulfuric acid. A runaway greenhouse effect makes it the hottest planet, at about 465 °C, and it spins backwards.',
     facts: [
@@ -102,7 +96,7 @@ export const planets = [
       radius: 0.27,
       distance: 2.2,
       period: 27.32,
-      surface: { type: 'rocky', colors: ['#4d4d4d', '#8f8f8f', '#c4c4c4'], seed: 9.2 },
+      surface: { type: 'map', map: 'textures/moon.jpg' },
     },
     description: 'Our home, and the only world known to host life. About 71% of its surface is covered by liquid water.',
     facts: [
@@ -125,13 +119,7 @@ export const planets = [
     rotationHours: 24.623,
     tilt: 25.19,
     L0: 355.4533,
-    surface: {
-      type: 'rocky',
-      colors: ['#6b2e17', '#b5562a', '#d9824a', '#f2ece6'],
-      ice: 0.12,
-      seed: 5.6,
-      atmosphere: { color: '#ff9a6a', strength: 0.35 },
-    },
+    surface: { type: 'map', map: 'textures/mars.jpg', atmosphere: { color: '#ff9a6a', strength: 0.35 } },
     description:
       'A cold desert world coloured red by iron oxide. It has polar ice caps and the tallest volcano in the solar system, Olympus Mons.',
     facts: [
@@ -154,15 +142,7 @@ export const planets = [
     rotationHours: 9.925,
     tilt: 3.13,
     L0: 34.3964,
-    surface: {
-      type: 'gas',
-      colors: ['#b07f53', '#e9d6b5', '#f6ecd8', '#b9543a'],
-      bands: 22,
-      turbulence: 2.5,
-      spot: { lat: -22, lon: 0, size: 0.28, strength: 0.9 },
-      seed: 7.4,
-      atmosphere: { color: '#ffe2b8', strength: 0.3 },
-    },
+    surface: { type: 'map', map: 'textures/jupiter.jpg', atmosphere: { color: '#ffe2b8', strength: 0.3 } },
     description:
       'The largest planet, more than twice as massive as all the others combined. Its Great Red Spot is a storm wider than Earth.',
     facts: [
@@ -185,15 +165,9 @@ export const planets = [
     rotationHours: 10.656,
     tilt: 26.73,
     L0: 49.9554,
-    surface: {
-      type: 'gas',
-      colors: ['#c9a86b', '#ead7a4', '#f4e8c8'],
-      bands: 18,
-      turbulence: 1.5,
-      seed: 8.8,
-      atmosphere: { color: '#ffeccc', strength: 0.3 },
-    },
-    rings: { inner: 1.25, outer: 2.3, colors: ['#8c7a5b', '#e6d5b0'], opacity: 1, cassini: true },
+    surface: { type: 'map', map: 'textures/saturn.jpg', atmosphere: { color: '#ffeccc', strength: 0.3 } },
+    // The ring image runs from 1.19 to 2.33 Saturn radii: C ring, B ring, Cassini division, A ring
+    rings: { inner: 1.19, outer: 2.33, map: 'textures/saturn_ring.png' },
     description: 'A gas giant famous for its bright rings of ice and rock. It is the only planet less dense than water.',
     facts: [
       ['Diameter', '120,536 km'],
@@ -215,14 +189,7 @@ export const planets = [
     rotationHours: -17.24,
     tilt: 97.77,
     L0: 313.2381,
-    surface: {
-      type: 'gas',
-      colors: ['#7fd0d8', '#a6e6ea', '#c9f3f4'],
-      bands: 6,
-      turbulence: 0.8,
-      seed: 3.3,
-      atmosphere: { color: '#bff6ff', strength: 0.8 },
-    },
+    surface: { type: 'map', map: 'textures/uranus.jpg', atmosphere: { color: '#bff6ff', strength: 0.8 } },
     rings: { inner: 1.5, outer: 2.0, colors: ['#6f8a8f', '#a9c4c7'], opacity: 0.3 },
     description:
       'An ice giant tipped on its side, with an axial tilt of about 98°. Each pole gets around 42 years of continuous sunlight followed by 42 years of darkness.',
@@ -246,15 +213,7 @@ export const planets = [
     rotationHours: 16.11,
     tilt: 28.32,
     L0: 304.88,
-    surface: {
-      type: 'gas',
-      colors: ['#2945b8', '#3f6fe0', '#7fa6ff', '#1a2a7a'],
-      bands: 8,
-      turbulence: 2,
-      spot: { lat: -20, lon: 1.5, size: 0.2, strength: 0.7 },
-      seed: 6.1,
-      atmosphere: { color: '#6f9bff', strength: 1 },
-    },
+    surface: { type: 'map', map: 'textures/neptune.jpg', atmosphere: { color: '#6f9bff', strength: 1 } },
     description:
       'The most distant planet: a deep-blue ice giant with the fastest winds in the solar system, topping 2,000 km/h.',
     facts: [

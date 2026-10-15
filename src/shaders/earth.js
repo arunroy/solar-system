@@ -1,18 +1,8 @@
 import * as THREE from 'three'
+import { loadTexture } from './textures.js'
 
 // Earth uses real NASA imagery (public domain, see README) instead of procedural noise:
 // Blue Marble for the day side, Black Marble city lights for the night side, and a global cloud map.
-
-export const textureManager = new THREE.LoadingManager()
-const loader = new THREE.TextureLoader(textureManager)
-
-function loadTexture(path, { color = true } = {}) {
-  const texture = loader.load(`${import.meta.env.BASE_URL}${path}`)
-  texture.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace
-  texture.wrapS = THREE.RepeatWrapping // clouds drift across the date line
-  texture.anisotropy = 8
-  return texture
-}
 
 const vertexShader = /* glsl */ `
   varying vec2 vUv;

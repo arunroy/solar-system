@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { createPlanetMaterial } from '../shaders/planet.js'
 import { createEarthMaterial } from '../shaders/earth.js'
+import { loadTexture } from '../shaders/textures.js'
 import { createLabel, createOrbit } from './helpers.js'
 
 const TAU = Math.PI * 2
@@ -29,6 +30,8 @@ const ringFragmentShader = /* glsl */ `
   uniform float uPlanetRadius;
   uniform float uOpacity;
   uniform float uCassini;
+  uniform sampler2D uMap; // optional radial strip: inner edge on the left, alpha = ring density
+  uniform float uHasMap;
   varying vec3 vWorld;
   varying float vR;
 
@@ -45,6 +48,11 @@ const ringFragmentShader = /* glsl */ `
     alpha *= 0.35 + bands * 0.75;
     alpha *= 1.0 - (smoothstep(0.55, 0.57, r) - smoothstep(0.61, 0.63, r)) * 0.9 * uCassini;
     vec3 color = mix(uColorA, uColorB, clamp(bands, 0.0, 1.0));
+    if (uHasMap > 0.5) {
+      vec4 strip = texture2D(uMap, vec2(r, 0.5));
+      color = strip.rgb;
+      alpha = strip.a;
+    }
 
     // Planet's shadow: does the ray toward the Sun (at the origin) hit the planet sphere?
     vec3 L = normalize(-vWorld);
@@ -102,10 +110,14 @@ export class Planet {
     this.orbit = createOrbit(data.distance)
   }
 
-  createRings({ inner, outer, colors, opacity, cassini }) {
+  createRings({ inner, outer, colors = [], opacity = 1, cassini, map }) {
     const innerR = this.radius * inner
     const outerR = this.radius * outer
+    const strip = map ? loadTexture(map) : null
+    if (strip) strip.wrapS = THREE.ClampToEdgeWrapping
     this.ringUniforms = {
+      uMap: { value: strip },
+      uHasMap: { value: strip ? 1 : 0 },
       uInner: { value: innerR },
       uOuter: { value: outerR },
       uColorA: { value: new THREE.Color(colors[0]) },
@@ -135,6 +147,7 @@ export class Planet {
     this.moonPivot = new THREE.Group()
     const moon = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 24), createPlanetMaterial(surface))
     moon.position.x = distance
+    moon.rotation.y = Math.PI // tidally locked: turn the map's near side (longitude 0) toward the planet
     this.moonPivot.add(moon)
     this.moonPivot.add(
       new THREE.LineLoop(

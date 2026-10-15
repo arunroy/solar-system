@@ -1,15 +1,19 @@
 import * as THREE from 'three'
 import { simplexNoise3D, fbm3D } from './noise.js'
+import { loadTexture } from './textures.js'
 
-// Planet surfaces are fully procedural: noise is sampled on the unit sphere in object space,
-// so there are no texture seams or image downloads. The Sun sits at the world origin.
+// Surfaces are either real imagery ('map': an equirectangular image, see README) or procedural
+// ('rocky', 'gas'): noise sampled on the unit sphere in object space, with no seams or downloads.
+// The Sun sits at the world origin.
 
 const vertexShader = /* glsl */ `
+  varying vec2 vUv;
   varying vec3 vObj;
   varying vec3 vNormal;
   varying vec3 vWorld;
 
   void main() {
+    vUv = uv;
     vObj = normalize(position);
     vNormal = normalize(mat3(modelMatrix) * normal);
     vec4 world = modelMatrix * vec4(position, 1.0);
@@ -20,6 +24,7 @@ const vertexShader = /* glsl */ `
 
 const fragmentShader = /* glsl */ `
   uniform int uType;
+  uniform sampler2D uMap;
   uniform vec3 uColorA;
   uniform vec3 uColorB;
   uniform vec3 uColorC;
@@ -33,6 +38,7 @@ const fragmentShader = /* glsl */ `
   uniform vec3 uAtmoColor;
   uniform float uAtmo;
 
+  varying vec2 vUv;
   varying vec3 vObj;
   varying vec3 vNormal;
   varying vec3 vWorld;
@@ -71,7 +77,7 @@ const fragmentShader = /* glsl */ `
   }
 
   void main() {
-    vec3 color = uType == 0 ? rocky(vObj) : gas(vObj);
+    vec3 color = uType == 2 ? texture2D(uMap, vUv).rgb : uType == 0 ? rocky(vObj) : gas(vObj);
 
     vec3 N = normalize(vNormal);
     vec3 L = normalize(-vWorld);
@@ -88,20 +94,22 @@ const fragmentShader = /* glsl */ `
   }
 `
 
-const TYPES = { rocky: 0, gas: 1 } // Earth has its own textured material in earth.js
+const TYPES = { rocky: 0, gas: 1, map: 2 } // Earth has its own material in earth.js
 
 export function createPlanetMaterial(surface) {
   const color = (hex) => new THREE.Color(hex ?? '#000000')
+  const colors = surface.colors ?? []
   const spot = surface.spot
   return new THREE.ShaderMaterial({
     vertexShader,
     fragmentShader,
     uniforms: {
       uType: { value: TYPES[surface.type] },
-      uColorA: { value: color(surface.colors[0]) },
-      uColorB: { value: color(surface.colors[1]) },
-      uColorC: { value: color(surface.colors[2]) },
-      uColorD: { value: color(surface.colors[3]) },
+      uMap: { value: surface.map ? loadTexture(surface.map) : null },
+      uColorA: { value: color(colors[0]) },
+      uColorB: { value: color(colors[1]) },
+      uColorC: { value: color(colors[2]) },
+      uColorD: { value: color(colors[3]) },
       uSeed: { value: surface.seed ?? 0 },
       uTime: { value: 0 },
       uBands: { value: surface.bands ?? 10 },

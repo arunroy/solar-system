@@ -99,7 +99,7 @@ const hideLoader = () => $('#loader').classList.add('is-hidden')
 try {
   const system = new SolarSystem($('#scene'), { onSelect: showInfo })
   setupControls(system)
-  // Wait for Earth's textures, but never keep the loader up for more than a few seconds
+  // Wait for the planet textures, but never keep the loader up for more than a few seconds
   Promise.race([system.ready, new Promise((resolve) => setTimeout(resolve, 8000))]).then(hideLoader)
 } catch (err) {
   console.error(err)

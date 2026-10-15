@@ -9,7 +9,7 @@ import { Sun } from './objects/Sun.js'
 import { Planet } from './objects/Planet.js'
 import { AsteroidBelt } from './objects/AsteroidBelt.js'
 import { createStars } from './objects/Stars.js'
-import { textureManager } from './shaders/earth.js'
+import { textureManager } from './shaders/textures.js'
 import { sun as sunData, planets as planetData, asteroidBelt } from './data.js'
 
 const J2000 = Date.UTC(2000, 0, 1, 12)
@@ -63,7 +63,7 @@ export class SolarSystem {
     this.scene.add(this.sun.group)
 
     this.planets = planetData.map((data) => new Planet(data))
-    // Resolves once Earth's image textures have loaded (or failed — the manager still finishes)
+    // Resolves once the planet image textures have loaded (or failed — the manager still finishes)
     this.ready = new Promise((resolve) => {
       textureManager.onLoad = resolve
       textureManager.onError = (url) => console.warn(`Failed to load texture: ${url}`)
