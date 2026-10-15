@@ -75,9 +75,12 @@ export class SolarSystem {
     this.belt = new AsteroidBelt(asteroidBelt)
     this.scene.add(this.belt.mesh)
 
-    this.bodies = [this.sun, ...this.planets]
-    this.hitTargets = this.bodies.map((b) => b.hitTarget)
-    for (const body of this.bodies) {
+    this.bodies = [this.sun, ...this.planets] // the dock and keys 0–8
+    this.moons = this.planets.flatMap((planet) => planet.moons)
+    const clickable = [...this.bodies, ...this.moons]
+    this.hitTargets = clickable.map((b) => b.hitTarget)
+    this.planetMeshes = this.planets.map((planet) => planet.mesh)
+    for (const body of clickable) {
       body.label.element.addEventListener('click', () => this.focusOn(body))
     }
 
@@ -144,7 +147,15 @@ export class SolarSystem {
 
   pick() {
     this.raycaster.setFromCamera(this.pointer, this.camera)
-    return this.raycaster.intersectObjects(this.hitTargets, false)[0]?.object.userData.body ?? null
+    const hits = this.raycaster.intersectObjects(this.hitTargets, false)
+    // Planets' hit spheres are generous, which would hide a moon right beside its planet: prefer a moon
+    // whenever its hit sphere is under the pointer and no planet's visible surface is in front of it
+    const moonHit = hits.find((hit) => hit.object.userData.body.planet)
+    if (moonHit) {
+      const surface = this.raycaster.intersectObjects(this.planetMeshes, false)[0]
+      if (!surface || surface.distance > moonHit.distance) return moonHit.object.userData.body
+    }
+    return hits[0]?.object.userData.body ?? null
   }
 
   resize() {
@@ -176,7 +187,7 @@ export class SolarSystem {
   focusOn(body) {
     if (!body) return
     this.focus = body
-    const distance = body.radius * (body === this.sun ? 3.2 : 5) + 1
+    const distance = body.viewDistance ?? body.radius * (body === this.sun ? 3.2 : 5) + 1
 
     let direction
     if (body === this.sun) {
@@ -194,7 +205,10 @@ export class SolarSystem {
       (target) => target.clone().add(offset),
     )
     this.controls.minDistance = body.radius * 1.4
-    for (const planet of this.planets) planet.orbit.material.opacity = planet === body ? 0.45 : 0.12
+    // Highlight the planet's orbit, and label the moons of the planet (or moon) in focus
+    const system = body.planet ?? body
+    for (const planet of this.planets) planet.orbit.material.opacity = planet === system ? 0.45 : 0.12
+    for (const moon of this.moons) moon.label.visible = moon.planet === system
     this.onSelect(body)
   }
 
@@ -203,6 +217,7 @@ export class SolarSystem {
     this.focus = null
     this.controls.minDistance = 2
     for (const planet of this.planets) planet.orbit.material.opacity = 0.12
+    for (const moon of this.moons) moon.label.visible = false
     this.startFlight(
       () => OVERVIEW_TARGET,
       () => OVERVIEW_CAMERA,

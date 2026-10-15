@@ -4,6 +4,7 @@ import { createEarthMaterial } from '../shaders/earth.js'
 import { loadTexture } from '../shaders/textures.js'
 import { MAX_OCCLUDERS, occluderRatio } from '../shaders/eclipses.js'
 import { createLabel, createOrbit } from './helpers.js'
+import { Moon } from './Moon.js'
 
 const TAU = Math.PI * 2
 // Real rotation rates would turn Jupiter into a blur at high time speeds, so spin is slowed and capped
@@ -96,7 +97,7 @@ export class Planet {
     this.tilt.add(this.mesh)
 
     if (data.rings) this.createRings(data.rings)
-    this.moons = (data.moons ?? []).map((moon) => this.createMoon(moon))
+    this.moons = (data.moons ?? []).map((moon) => new Moon(moon, this))
     this.setUpEclipses()
 
     // Generous invisible sphere so small planets are easy to click from far away
@@ -155,30 +156,13 @@ export class Planet {
     }
   }
 
-  /** Moons orbit in the planet's equatorial plane, unless `equatorial: false` (Earth's Moon keeps near the ecliptic). */
-  createMoon({ radius, distance, period, surface, equatorial = true }) {
-    const pivot = new THREE.Group()
-    const moon = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 24), createPlanetMaterial(surface))
-    moon.position.x = distance
-    moon.rotation.y = Math.PI // tidally locked: turn the map's near side (longitude 0) toward the planet
-    pivot.add(moon)
-    pivot.add(
-      new THREE.LineLoop(
-        createOrbit(distance, 96).geometry,
-        new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, depthWrite: false }),
-      ),
-    )
-    ;(equatorial ? this.tilt : this.group).add(pivot)
-    return { pivot, period, mesh: moon, radius }
-  }
-
   /** Moons shadow the planet (solar eclipses, shadow transits) and the planet shadows its moons. */
   setUpEclipses() {
-    const { au, radiusKm, moons = [] } = this.data
+    const { au, radiusKm } = this.data
     const planet = this.mesh.material.uniforms
     planet.uOccluderCount.value = Math.min(this.moons.length, MAX_OCCLUDERS)
     this.moons.slice(0, MAX_OCCLUDERS).forEach((moon, i) => {
-      const { radiusKm: moonKm, orbitKm } = moons[i]
+      const { radiusKm: moonKm, orbitKm } = moon.data
       planet.uOccluderRatios.value[i] = occluderRatio(moonKm, orbitKm - radiusKm, au)
       planet.uOccluders.value[i].w = moon.radius
       const uniforms = moon.mesh.material.uniforms
@@ -217,7 +201,7 @@ export class Planet {
     }
     this.mesh.material.uniforms.uTime.value = elapsed
 
-    for (const moon of this.moons) moon.pivot.rotation.y = ((days / moon.period) % 1) * TAU
+    for (const moon of this.moons) moon.update(days)
     this.updateEclipses()
     if (this.ringUniforms) this.ringUniforms.uPlanetCenter.value.copy(this.group.position)
   }
