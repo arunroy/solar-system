@@ -182,7 +182,8 @@ export const planets = [
     surface: { type: 'map', map: 'textures/jupiter.jpg', limbDarkening: 1.2, atmosphere: { color: '#ffe2b8', strength: 0.3 } },
     // The Galilean moons: radii true to scale against Jupiter, real periods, orbits compressed to fit.
     // The maps' brightness is arbitrary, so it is rescaled to keep the real albedo order, compressed so
-    // nothing clips: Moon 0.32 < Callisto 0.36 < Ganymede 0.50 < Io 0.59 < Europa 0.72 (mean linear light).
+    // nothing clips: Moon 0.32 < Callisto 0.36 < Ganymede 0.37 < Io 0.39 < Europa 0.72 (mean linear light).
+    // Io's map has bright frost patches, so it is kept low enough that none of them cross the bloom threshold.
     // Europa, Ganymede and Callisto have greyscale maps: `mapMean` is each map's mean grey (measured in
     // linear light; it also fills the polar no-data gaps) and `tint` the moon's average colour
     moons: [
@@ -205,7 +206,7 @@ export const planets = [
         distance: 4.8,
         L0: 18.158,
         period: 1.7691378,
-        surface: { type: 'map', map: 'textures/io.jpg', brightness: 2.4 },
+        surface: { type: 'map', map: 'textures/io.jpg', brightness: 1.6 },
       },
       {
         name: 'Europa',
@@ -247,7 +248,7 @@ export const planets = [
         distance: 7.3,
         L0: 220.069,
         period: 7.1545530,
-        surface: { type: 'map', map: 'textures/ganymede.jpg', tint: '#c0bcb5', mapMean: '#525252' },
+        surface: { type: 'map', map: 'textures/ganymede.jpg', tint: '#aaa6a0', mapMean: '#525252' },
       },
       {
         name: 'Callisto',
