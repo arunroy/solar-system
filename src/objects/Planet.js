@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { createPlanetMaterial } from '../shaders/planet.js'
+import { createEarthMaterial } from '../shaders/earth.js'
 import { createLabel, createOrbit } from './helpers.js'
 
 const TAU = Math.PI * 2
@@ -58,6 +59,17 @@ const ringFragmentShader = /* glsl */ `
   }
 `
 
+/**
+ * Tilts the spin axis by `tilt` degrees, leaning the north pole toward heliocentric longitude
+ * `poleLongitude`. The default of 180° leans toward −X.
+ */
+function tiltQuaternion({ tilt, poleLongitude = 180 }) {
+  const lean = THREE.MathUtils.degToRad(poleLongitude)
+  const leanDirection = new THREE.Vector3(Math.cos(lean), 0, -Math.sin(lean))
+  const axis = new THREE.Vector3(0, 1, 0).cross(leanDirection).normalize()
+  return new THREE.Quaternion().setFromAxisAngle(axis, THREE.MathUtils.degToRad(tilt))
+}
+
 export class Planet {
   constructor(data) {
     this.data = data
@@ -66,10 +78,11 @@ export class Planet {
 
     this.group = new THREE.Group() // moves along the orbit
     this.tilt = new THREE.Group() // axial tilt
-    this.tilt.rotation.z = THREE.MathUtils.degToRad(data.tilt)
+    this.tilt.quaternion.copy(tiltQuaternion(data))
     this.group.add(this.tilt)
 
-    this.mesh = new THREE.Mesh(new THREE.SphereGeometry(this.radius, 96, 48), createPlanetMaterial(data.surface))
+    const material = data.surface.type === 'earth' ? createEarthMaterial(data.surface) : createPlanetMaterial(data.surface)
+    this.mesh = new THREE.Mesh(new THREE.SphereGeometry(this.radius, 96, 48), material)
     this.tilt.add(this.mesh)
 
     if (data.rings) this.createRings(data.rings)

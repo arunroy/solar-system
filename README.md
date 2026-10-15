@@ -4,7 +4,8 @@ An interactive 3D model of the solar system built with [Three.js](https://threej
 
 ## Features
 
-- **Procedural planets:** every surface is generated in GLSL from 3D simplex noise, so there are no texture downloads and no seams. This covers rocky worlds with craters and polar ice, banded gas giants with storms (Jupiter's Great Red Spot), and Earth with oceans, continents, ice caps and drifting clouds.
+- **Realistic Earth:** NASA satellite imagery shows the real continents by day and city lights at night, with drifting clouds, sunlight glinting off the oceans, and an atmospheric rim. The axis leans the right way, so the seasons fall on the right dates.
+- **Procedural planets:** the other planets are generated in GLSL from 3D simplex noise, so they need no texture downloads and have no seams. This covers rocky worlds with craters and polar ice, and banded gas giants with storms (Jupiter's Great Red Spot).
 - **Animated Sun:** a shader surface with granulation and limb darkening, plus a corona and a bloom glow.
 - **Saturn's and Uranus's rings:** shader rings with banding, the Cassini division, and the planet's shadow cast across them.
 - **Real orbital data:** real orbital periods, axial tilts (Uranus on its side) and retrograde spin (Venus, Uranus). Planets start at roughly their real positions for today's date.
@@ -45,4 +46,14 @@ npm run preview  # serve the production build locally
 | `src/objects/AsteroidBelt.js` | Instanced asteroid belt |
 | `src/objects/Stars.js` | Background starfield |
 | `src/shaders/planet.js` | Procedural planet surface shader |
+| `src/shaders/earth.js` | Earth shader: day and night imagery, clouds, ocean glint |
+| `public/textures/` | NASA Earth imagery |
 | `src/main.js` | HUD: info panel, dock, time controls, keyboard shortcuts |
+
+## Image credits
+
+Earth textures are from NASA and are in the public domain:
+
+- Day: [Blue Marble: Next Generation](https://visibleearth.nasa.gov/images/74117) (August 2004), NASA Earth Observatory / Reto Stöckli
+- Night: [Earth at Night (Black Marble) 2016](https://visibleearth.nasa.gov/images/144898), NASA Earth Observatory / Joshua Stevens, Miguel Román
+- Clouds: [Blue Marble clouds](https://visibleearth.nasa.gov/images/57747), NASA Goddard Space Flight Center

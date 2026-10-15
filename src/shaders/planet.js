@@ -29,7 +29,6 @@ const fragmentShader = /* glsl */ `
   uniform float uBands;
   uniform float uTurb;
   uniform float uIce;
-  uniform float uClouds;
   uniform vec4 uSpot; // lat (rad), lon (rad), size, strength
   uniform vec3 uAtmoColor;
   uniform float uAtmo;
@@ -71,31 +70,8 @@ const fragmentShader = /* glsl */ `
     return c;
   }
 
-  vec3 earth(vec3 p) {
-    float n = fbm(p * 1.6 + uSeed);
-    float land = smoothstep(0.03, 0.07, n);
-    vec3 ocean = mix(uColorA, uColorB, smoothstep(-0.35, 0.05, n));
-    float m = fbm(p * 5.0 + uSeed * 2.0);
-    vec3 ground = mix(uColorC, uColorD, smoothstep(-0.1, 0.35, m + (n - 0.1)));
-    vec3 c = mix(ocean, ground, land);
-    float ice = smoothstep(0.8, 0.86, abs(p.y) + m * 0.06);
-    return mix(c, vec3(0.85, 0.9, 0.95), ice);
-  }
-
   void main() {
-    vec3 p = vObj;
-    vec3 color;
-    if (uType == 0) color = rocky(p);
-    else if (uType == 1) color = gas(p);
-    else color = earth(p);
-
-    if (uClouds > 0.0) {
-      // Clouds drift by rotating the noise domain around the planet's axis
-      float t = uTime * 0.02;
-      vec3 q = vec3(p.x * cos(t) - p.z * sin(t), p.y, p.x * sin(t) + p.z * cos(t));
-      float cloud = smoothstep(0.05, 0.45, fbm(q * 2.6 + 40.0));
-      color = mix(color, vec3(1.0), cloud * uClouds);
-    }
+    vec3 color = uType == 0 ? rocky(vObj) : gas(vObj);
 
     vec3 N = normalize(vNormal);
     vec3 L = normalize(-vWorld);
@@ -112,7 +88,7 @@ const fragmentShader = /* glsl */ `
   }
 `
 
-const TYPES = { rocky: 0, gas: 1, earth: 2 }
+const TYPES = { rocky: 0, gas: 1 } // Earth has its own textured material in earth.js
 
 export function createPlanetMaterial(surface) {
   const color = (hex) => new THREE.Color(hex ?? '#000000')
@@ -131,7 +107,6 @@ export function createPlanetMaterial(surface) {
       uBands: { value: surface.bands ?? 10 },
       uTurb: { value: surface.turbulence ?? 2 },
       uIce: { value: surface.ice ?? 0 },
-      uClouds: { value: surface.clouds ?? 0 },
       uSpot: {
         value: spot
           ? new THREE.Vector4(THREE.MathUtils.degToRad(spot.lat), spot.lon, spot.size, spot.strength)

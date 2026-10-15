@@ -85,12 +85,17 @@ export const planets = [
     period: 365.256,
     rotationHours: 23.934,
     tilt: 23.44,
+    // Heliocentric longitude the north pole leans toward, so seasons fall on the right dates
+    // (northern summer at the June solstice, when Earth is at longitude 270° and the Sun lies at 90°)
+    poleLongitude: 90,
     L0: 100.4645,
     surface: {
       type: 'earth',
-      colors: ['#0b2a5e', '#1f6fa8', '#2f6b2a', '#9c8458'],
-      clouds: 0.85,
-      seed: 4.1,
+      textures: {
+        day: 'textures/earth_day.jpg',
+        night: 'textures/earth_night.jpg',
+        clouds: 'textures/earth_clouds.jpg',
+      },
       atmosphere: { color: '#5fa8ff', strength: 1.2 },
     },
     moon: {
