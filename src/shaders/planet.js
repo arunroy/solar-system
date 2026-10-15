@@ -25,6 +25,13 @@ const vertexShader = /* glsl */ `
 const fragmentShader = /* glsl */ `
   uniform int uType;
   uniform sampler2D uMap;
+  // Greyscale map with an arbitrary contrast stretch: divide by the map's mean grey so uTint sets the average
+  // surface colour, and fill black no-data gaps with that mean. Gaps are sRGB 0–4 and real terrain starts
+  // near 25, so blending over linear 0.002–0.008 (sRGB ≈ 6–22) also hides the JPEG fringe
+  uniform float uGreyscale;
+  uniform vec3 uTint;
+  uniform float uMapMean;
+  uniform float uBrightness; // scales a map whose overall brightness doesn't match the body's albedo
   uniform vec3 uColorA;
   uniform vec3 uColorB;
   uniform vec3 uColorC;
@@ -85,6 +92,8 @@ const fragmentShader = /* glsl */ `
 
   void main() {
     vec3 color = uType == 2 ? texture2D(uMap, vUv).rgb : uType == 0 ? rocky(vObj) : gas(vObj);
+    if (uGreyscale > 0.5) color = mix(uMapMean, color.r, smoothstep(0.002, 0.008, color.r)) / uMapMean * uTint;
+    color *= uBrightness;
 
     vec3 N = normalize(vNormal);
     vec3 L = normalize(-vWorld);
@@ -127,6 +136,10 @@ export function createPlanetMaterial(surface) {
     uniforms: {
       uType: { value: TYPES[surface.type] },
       uMap: { value: surface.map ? loadTexture(surface.map) : null },
+      uGreyscale: { value: surface.tint ? 1 : 0 },
+      uTint: { value: new THREE.Color(surface.tint ?? '#ffffff') },
+      uMapMean: { value: new THREE.Color(surface.mapMean ?? '#ffffff').r },
+      uBrightness: { value: surface.brightness ?? 1 },
       uColorA: { value: color(colors[0]) },
       uColorB: { value: color(colors[1]) },
       uColorC: { value: color(colors[2]) },

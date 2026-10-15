@@ -9,7 +9,8 @@ An interactive 3D model of the solar system built with [Three.js](https://threej
 - **Animated Sun:** a shader surface with granulation and limb darkening, plus a corona and a bloom glow.
 - **Saturn's and Uranus's rings:** Saturn's rings come from a real brightness and density profile, including the Cassini division; Uranus's are banded in a shader. Both show the planet's shadow cast across them, and Saturn's rings cast their own shadow back onto the planet. Saturn's axis leans the right way, so the rings turn edge-on to the Sun at the real equinoxes.
 - **Real orbital data:** real orbital periods, and axial tilts that point each planet's pole in its real direction in space (Uranus on its side), with retrograde spin for Venus and Uranus. Planets start at roughly their real positions for today's date.
-- **Earth's Moon**, tidally locked with its near side facing Earth, and an **asteroid belt** of 2,500 rocks drawn in a single instanced draw call.
+- **Moons:** Earth's Moon; Jupiter's Galilean moons Io, Europa, Ganymede and Callisto from Voyager and Galileo mosaics; and Saturn's Titan, wrapped in orange haze. All are tidally locked, sized true to scale against their planet and orbit with their real periods. The giant planets' moons orbit in the planet's equatorial plane, so Titan's orbit lines up with Saturn's rings.
+- An **asteroid belt** of 2,500 rocks drawn in a single instanced draw call.
 - **Time controls:** play and pause, a speed range from 2.4 hours/s to about 2.7 years/s, a jump back to today, and a live simulated date.
 - **Click to fly:** select a planet (or the Sun) in the scene, with its label, from the dock, or with keys `0`–`8`. The camera flies to it and follows it along its orbit, and a panel shows facts about it.
 - Toggles for orbit lines and labels, and a responsive layout.
@@ -60,3 +61,12 @@ Earth textures are from NASA and are in the public domain:
 - Clouds: [Blue Marble clouds](https://visibleearth.nasa.gov/images/57747), NASA Goddard Space Flight Center
 
 Maps of the other planets, the Moon and Saturn's rings are by [Solar System Scope](https://www.solarsystemscope.com/textures/), based on NASA mission data, and are licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). They are used unmodified, renamed (for example `2k_mars.jpg` → `mars.jpg`).
+
+Maps of Jupiter's moons are from the USGS Astrogeology Science Center and NASA/JPL, built from Voyager and Galileo SSI images, and are in the public domain. They are the 1024×512 previews of these mosaics:
+
+- Io: [Io Galileo SSI / Voyager Color Merged Global Mosaic 1km](https://astrogeology.usgs.gov/search/map/io_galileo_ssi_voyager_color_merged_global_mosaic_1km)
+- Europa: [Europa Voyager - Galileo SSI Global Mosaic 500m](https://astrogeology.usgs.gov/search/map/europa_voyager_galileo_ssi_global_mosaic_500m)
+- Ganymede: [Ganymede Voyager - Galileo SSI Global Mosaic 1km](https://astrogeology.usgs.gov/search/map/ganymede_voyager_galileo_ssi_global_mosaic_1km)
+- Callisto: [Callisto Galileo/Voyager Global Mosaic 1km](https://astrogeology.usgs.gov/search/map/callisto_galileo_voyager_global_mosaic_1km)
+
+Europa, Ganymede and Callisto are greyscale. They are coloured in the shader, and their small black no-data gaps near the poles are filled there too, so the files themselves are unmodified.

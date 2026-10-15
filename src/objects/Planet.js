@@ -94,7 +94,7 @@ export class Planet {
     this.tilt.add(this.mesh)
 
     if (data.rings) this.createRings(data.rings)
-    if (data.moon) this.createMoon(data.moon)
+    this.moons = (data.moons ?? []).map((moon) => this.createMoon(moon))
 
     // Generous invisible sphere so small planets are easy to click from far away
     this.hitTarget = new THREE.Mesh(
@@ -152,20 +152,21 @@ export class Planet {
     }
   }
 
-  createMoon({ radius, distance, period, surface }) {
-    this.moon = { period }
-    this.moonPivot = new THREE.Group()
+  /** Moons orbit in the planet's equatorial plane, unless `equatorial: false` (Earth's Moon keeps near the ecliptic). */
+  createMoon({ radius, distance, period, surface, equatorial = true }) {
+    const pivot = new THREE.Group()
     const moon = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 24), createPlanetMaterial(surface))
     moon.position.x = distance
     moon.rotation.y = Math.PI // tidally locked: turn the map's near side (longitude 0) toward the planet
-    this.moonPivot.add(moon)
-    this.moonPivot.add(
+    pivot.add(moon)
+    pivot.add(
       new THREE.LineLoop(
         createOrbit(distance, 96).geometry,
         new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, depthWrite: false }),
       ),
     )
-    this.group.add(this.moonPivot)
+    ;(equatorial ? this.tilt : this.group).add(pivot)
+    return { pivot, period }
   }
 
   /** World position. Planets are direct children of the scene, so local = world. */
@@ -186,7 +187,7 @@ export class Planet {
     }
     this.mesh.material.uniforms.uTime.value = elapsed
 
-    if (this.moonPivot) this.moonPivot.rotation.y = ((days / this.moon.period) % 1) * TAU
+    for (const moon of this.moons) moon.pivot.rotation.y = ((days / moon.period) % 1) * TAU
     if (this.ringUniforms) this.ringUniforms.uPlanetCenter.value.copy(this.group.position)
   }
 }

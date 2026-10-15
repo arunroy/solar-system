@@ -96,12 +96,16 @@ export const planets = [
       },
       atmosphere: { color: '#5fa8ff', strength: 1.2 },
     },
-    moon: {
-      radius: 0.27,
-      distance: 2.2,
-      period: 27.32,
-      surface: { type: 'map', map: 'textures/moon.jpg' },
-    },
+    moons: [
+      {
+        name: 'Moon',
+        radius: 0.27,
+        distance: 2.2,
+        period: 27.32,
+        equatorial: false, // the Moon's orbit stays within about 5° of the ecliptic, not Earth's equator
+        surface: { type: 'map', map: 'textures/moon.jpg' },
+      },
+    ],
     description: 'Our home, and the only world known to host life. About 71% of its surface is covered by liquid water.',
     facts: [
       ['Diameter', '12,756 km'],
@@ -149,6 +153,41 @@ export const planets = [
     poleLongitude: 247.8,
     L0: 34.3964,
     surface: { type: 'map', map: 'textures/jupiter.jpg', limbDarkening: 1.2, atmosphere: { color: '#ffe2b8', strength: 0.3 } },
+    // The Galilean moons: radii true to scale against Jupiter, real periods, orbits compressed to fit.
+    // The maps' brightness is arbitrary, so it is rescaled to keep the real albedo order, compressed so
+    // nothing clips: Moon 0.32 < Callisto 0.36 < Ganymede 0.50 < Io 0.59 < Europa 0.72 (mean linear light).
+    // Europa, Ganymede and Callisto have greyscale maps: `mapMean` is each map's mean grey (measured in
+    // linear light; it also fills the polar no-data gaps) and `tint` the moon's average colour
+    moons: [
+      {
+        name: 'Io',
+        radius: 0.073,
+        distance: 4.8,
+        period: 1.769,
+        surface: { type: 'map', map: 'textures/io.jpg', brightness: 2.4 },
+      },
+      {
+        name: 'Europa',
+        radius: 0.0625,
+        distance: 5.9,
+        period: 3.551,
+        surface: { type: 'map', map: 'textures/europa.jpg', tint: '#e1dcd3', mapMean: '#989898' },
+      },
+      {
+        name: 'Ganymede',
+        radius: 0.1055,
+        distance: 7.3,
+        period: 7.155,
+        surface: { type: 'map', map: 'textures/ganymede.jpg', tint: '#c0bcb5', mapMean: '#525252' },
+      },
+      {
+        name: 'Callisto',
+        radius: 0.0965,
+        distance: 9.2,
+        period: 16.689,
+        surface: { type: 'map', map: 'textures/callisto.jpg', tint: '#a9a196', mapMean: '#404040' },
+      },
+    ],
     description:
       'The largest planet, more than twice as massive as all the others combined. Its Great Red Spot is a storm wider than Earth.',
     facts: [
@@ -177,6 +216,23 @@ export const planets = [
     surface: { type: 'map', map: 'textures/saturn.jpg', limbDarkening: 1.2, atmosphere: { color: '#ffeccc', strength: 0.3 } },
     // The ring image runs from 1.19 to 2.33 Saturn radii: C ring, B ring, Cassini division, A ring
     rings: { inner: 1.19, outer: 2.33, map: 'textures/saturn_ring.png' },
+    moons: [
+      {
+        // Titan's thick orange haze hides its surface in visible light, so it is drawn as smooth haze
+        name: 'Titan',
+        radius: 0.106,
+        distance: 8.5,
+        period: 15.945,
+        surface: {
+          type: 'gas',
+          colors: ['#c08445', '#cc9350', '#d09856'],
+          bands: 3,
+          turbulence: 0.4,
+          seed: 4.2,
+          atmosphere: { color: '#e8a85a', strength: 1 },
+        },
+      },
+    ],
     description: 'A gas giant famous for its bright rings of ice and rock. It is the only planet less dense than water.',
     facts: [
       ['Diameter', '120,536 km'],
