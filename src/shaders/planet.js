@@ -37,6 +37,12 @@ const fragmentShader = /* glsl */ `
   uniform vec4 uSpot; // lat (rad), lon (rad), size, strength
   uniform vec3 uAtmoColor;
   uniform float uAtmo;
+  // Shadow cast by a ring image (see Planet.createRings): plane through the planet centre, world units
+  uniform float uRingShadow;
+  uniform sampler2D uRingMap;
+  uniform vec3 uRingCenter;
+  uniform vec3 uRingNormal;
+  uniform vec2 uRingRadii; // inner, outer
 
   varying vec2 vUv;
   varying vec3 vObj;
@@ -84,7 +90,17 @@ const fragmentShader = /* glsl */ `
     vec3 V = normalize(cameraPosition - vWorld);
     float NdotL = dot(N, L);
 
-    vec3 lit = color * (0.02 + max(NdotL, 0.0) * 1.05);
+    // Rings: follow the ray toward the Sun to the ring plane and dim sunlight by the ring density there
+    float sunlight = 1.0;
+    float denom = dot(L, uRingNormal);
+    if (uRingShadow > 0.5 && abs(denom) > 1e-4) {
+      float t = dot(uRingCenter - vWorld, uRingNormal) / denom;
+      float r = length(vWorld + L * t - uRingCenter);
+      float u = (r - uRingRadii.x) / (uRingRadii.y - uRingRadii.x);
+      if (t > 0.0 && u > 0.0 && u < 1.0) sunlight -= texture2D(uRingMap, vec2(u, 0.5)).a * 0.85;
+    }
+
+    vec3 lit = color * (0.02 + max(NdotL, 0.0) * 1.05 * sunlight);
 
     // Atmospheric rim light, only on the day side and the terminator
     float fresnel = pow(1.0 - max(dot(N, V), 0.0), 3.0);
@@ -122,6 +138,11 @@ export function createPlanetMaterial(surface) {
       },
       uAtmoColor: { value: color(surface.atmosphere?.color) },
       uAtmo: { value: surface.atmosphere?.strength ?? 0 },
+      uRingShadow: { value: 0 },
+      uRingMap: { value: null },
+      uRingCenter: { value: new THREE.Vector3() },
+      uRingNormal: { value: new THREE.Vector3(0, 1, 0) },
+      uRingRadii: { value: new THREE.Vector2() },
     },
   })
 }

@@ -164,6 +164,9 @@ export const planets = [
     period: 10759.22,
     rotationHours: 10.656,
     tilt: 26.73,
+    // North pole at ecliptic longitude ≈ 79.5°, so the rings turn edge-on to the Sun (equinox) at the
+    // right times, most recently in May 2025, and their shadow falls on the right hemisphere
+    poleLongitude: 79.5,
     L0: 49.9554,
     surface: { type: 'map', map: 'textures/saturn.jpg', atmosphere: { color: '#ffeccc', strength: 0.3 } },
     // The ring image runs from 1.19 to 2.33 Saturn radii: C ring, B ring, Cassini division, A ring

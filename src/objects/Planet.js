@@ -140,6 +140,16 @@ export class Planet {
     )
     rings.rotation.x = -Math.PI / 2
     this.tilt.add(rings)
+
+    // The rings' image also shades the planet beneath them (needs the density in its alpha)
+    const planet = this.mesh.material.uniforms
+    if (strip && planet.uRingShadow) {
+      planet.uRingShadow.value = 1
+      planet.uRingMap.value = strip
+      planet.uRingCenter.value = this.ringUniforms.uPlanetCenter.value // same vector, updated in update()
+      planet.uRingNormal.value.set(0, 1, 0).applyQuaternion(this.tilt.quaternion)
+      planet.uRingRadii.value.set(innerR, outerR)
+    }
   }
 
   createMoon({ radius, distance, period, surface }) {
