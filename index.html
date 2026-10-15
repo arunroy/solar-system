@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Interactive 3D model of the solar system built with Three.js" />
+    <meta name="theme-color" content="#000000" />
+    <title>Solar System</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='26' fill='%23ffb02e'/><ellipse cx='50' cy='50' rx='46' ry='14' fill='none' stroke='%23ffffff' stroke-width='4'/></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="scene"></div>
+    <div id="loader" aria-hidden="true"><span></span></div>
+
+    <header class="title">
+      <h1>Solar System</h1>
+      <p><time id="date"></time></p>
+    </header>
+
+    <div class="panel controls">
+      <button id="pause" class="icon-btn" type="button" aria-label="Pause">❚❚</button>
+      <label class="speed">
+        <span>Speed</span>
+        <input id="speed" type="range" min="0" max="100" value="50" />
+        <output id="speed-value"></output>
+      </label>
+      <button id="today" class="text-btn" type="button">Today</button>
+      <div class="toggles">
+        <label><input id="toggle-orbits" type="checkbox" checked /> Orbits</label>
+        <label><input id="toggle-labels" type="checkbox" checked /> Labels</label>
+      </div>
+    </div>
+
+    <aside id="info" class="panel info" aria-live="polite" hidden>
+      <button id="info-close" class="icon-btn info__close" type="button" aria-label="Back to overview">✕</button>
+      <p id="info-kind" class="info__kind"></p>
+      <h2 id="info-name"></h2>
+      <p id="info-desc" class="info__desc"></p>
+      <dl id="info-facts" class="info__facts"></dl>
+    </aside>
+
+    <nav id="dock" class="dock" aria-label="Celestial bodies"></nav>
+
+    <p class="footnote">
+      Sizes &amp; distances not to scale · Drag to orbit · Scroll to zoom · Click a planet ·
+      <kbd>Space</kbd> pause · <kbd>Esc</kbd> overview · <kbd>0</kbd>–<kbd>8</kbd> jump
+    </p>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
