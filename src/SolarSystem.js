@@ -17,6 +17,7 @@ const DAY_MS = 86_400_000
 const OVERVIEW_CAMERA = new THREE.Vector3(0, 60, 105)
 const OVERVIEW_TARGET = new THREE.Vector3()
 const UP = new THREE.Vector3(0, 1, 0)
+const ORBITAL_PLANE = new THREE.Plane(UP, 0)
 
 const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 const daysSinceJ2000 = (date) => (date.getTime() - J2000) / DAY_MS
@@ -37,6 +38,7 @@ export class SolarSystem {
     this.pointer = new THREE.Vector2()
     this.pointerInside = false
     this.hovered = null
+    this.hoverPoint = new THREE.Vector3()
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
     container.append(this.renderer.domElement)
@@ -220,7 +222,7 @@ export class SolarSystem {
 
     this.sun.update(this.days, dtDays, dt, this.elapsed)
     for (const planet of this.planets) planet.update(this.days, dtDays, dt, this.elapsed)
-    this.belt.update(this.days)
+    this.belt.update(this.days, dt, this.elapsed)
   }
 
   updateCamera(dt) {
@@ -247,6 +249,11 @@ export class SolarSystem {
   }
 
   updateHover() {
+    // Rocks in the asteroid belt part around the cursor's point on the orbital plane
+    this.raycaster.setFromCamera(this.pointer, this.camera)
+    const onPlane = this.pointerInside && this.raycaster.ray.intersectPlane(ORBITAL_PLANE, this.hoverPoint)
+    this.belt.setHover(onPlane ? this.hoverPoint : null, this.camera.position.distanceTo(this.hoverPoint))
+
     const hovered = this.pointerInside && !this.flight ? this.pick() : null
     if (hovered === this.hovered) return
     this.hovered?.label.element.classList.remove('is-hover')

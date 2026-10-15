@@ -10,7 +10,8 @@ An interactive 3D model of the solar system built with [Three.js](https://threej
 - **Saturn's and Uranus's rings:** Saturn's rings come from a real brightness and density profile, including the Cassini division; Uranus's are banded in a shader. Both show the planet's shadow cast across them, and Saturn's rings cast their own shadow back onto the planet. Saturn's axis leans the right way, so the rings turn edge-on to the Sun at the real equinoxes.
 - **Real orbital data:** real orbital periods, and axial tilts that point each planet's pole in its real direction in space (Uranus on its side), with retrograde spin for Venus and Uranus. Planets start at roughly their real positions for today's date.
 - **Moons:** Earth's Moon; Jupiter's Galilean moons Io, Europa, Ganymede and Callisto from Voyager and Galileo mosaics; and Saturn's Titan, wrapped in orange haze. All are tidally locked, sized true to scale against their planet and orbit with their real periods. The giant planets' moons orbit in the planet's equatorial plane, so Titan's orbit lines up with Saturn's rings.
-- An **asteroid belt** of 2,500 rocks drawn in a single instanced draw call.
+- **Eclipses:** moons cast shadows on their planets (Io's shadow crossing Jupiter, the Moon's shadow on Earth, where the city lights come on) and planets shadow their moons (Io vanishing behind Jupiter, the blood-red Moon of a total lunar eclipse). Distances are compressed, so each shadow is sized from the real angular sizes of the body and the Sun: soft for the Moon, which only just covers the Sun, and sharp for Jupiter as seen from Io.
+- An **asteroid belt** of 2,500 rocks drawn in a single instanced draw call. The rocks part around the mouse pointer and drift back when it moves on.
 - **Time controls:** play and pause, a speed range from 2.4 hours/s to about 2.7 years/s, a jump back to today, and a live simulated date.
 - **Click to fly:** select a planet (or the Sun) in the scene, with its label, from the dock, or with keys `0`–`8`. The camera flies to it and follows it along its orbit, and a panel shows facts about it.
 - Toggles for orbit lines and labels, and a responsive layout.
@@ -47,6 +48,7 @@ npm run preview  # serve the production build locally
 | `src/objects/AsteroidBelt.js` | Instanced asteroid belt |
 | `src/objects/Stars.js` | Background starfield |
 | `src/shaders/planet.js` | Planet surface shader: image maps or procedural noise |
+| `src/shaders/eclipses.js` | Eclipse shadows between planets and their moons |
 | `src/shaders/textures.js` | Shared texture loader that tracks loading progress |
 | `src/shaders/earth.js` | Earth shader: day and night imagery, clouds, ocean glint |
 | `public/textures/` | Planet, Moon and ring imagery |

@@ -31,6 +31,8 @@ export const planets = [
     color: '#a39b92',
     radius: 0.38,
     distance: 9,
+    au: 0.387, // real semi-major axis, for the Sun's apparent size in eclipses
+    radiusKm: 2439.7,
     period: 87.969,
     rotationHours: 1407.6,
     tilt: 0.03,
@@ -55,6 +57,8 @@ export const planets = [
     color: '#e8d3a2',
     radius: 0.95,
     distance: 12.5,
+    au: 0.723, // real semi-major axis, for the Sun's apparent size in eclipses
+    radiusKm: 6051.8,
     period: 224.701,
     rotationHours: 5832.5,
     tilt: 177.4,
@@ -80,12 +84,16 @@ export const planets = [
     color: '#4f9bff',
     radius: 1,
     distance: 17,
+    au: 1, // real semi-major axis, for the Sun's apparent size in eclipses
+    radiusKm: 6371,
     period: 365.256,
     rotationHours: 23.934,
     tilt: 23.44,
     // Heliocentric longitude the north pole leans toward, so seasons fall on the right dates
     // (northern summer at the June solstice, when Earth is at longitude 270° and the Sun lies at 90°)
     poleLongitude: 90,
+    // Sunlight reddened and bent into Earth's shadow by its atmosphere: the "blood moon" of a total lunar eclipse
+    shadowGlow: '#8a2a0c',
     L0: 100.4645,
     surface: {
       type: 'earth',
@@ -99,6 +107,8 @@ export const planets = [
     moons: [
       {
         name: 'Moon',
+        radiusKm: 1737.4,
+        orbitKm: 384400,
         radius: 0.27,
         distance: 2.2,
         period: 27.32,
@@ -123,6 +133,8 @@ export const planets = [
     color: '#d9824a',
     radius: 0.55,
     distance: 22,
+    au: 1.524, // real semi-major axis, for the Sun's apparent size in eclipses
+    radiusKm: 3389.5,
     period: 686.98,
     rotationHours: 24.623,
     tilt: 25.19,
@@ -147,6 +159,8 @@ export const planets = [
     color: '#e9d6b5',
     radius: 2.8,
     distance: 36,
+    au: 5.203, // real semi-major axis, for the Sun's apparent size in eclipses
+    radiusKm: 69911,
     period: 4332.59,
     rotationHours: 9.925,
     tilt: 3.13,
@@ -161,6 +175,8 @@ export const planets = [
     moons: [
       {
         name: 'Io',
+        radiusKm: 1821.6,
+        orbitKm: 421700,
         radius: 0.073,
         distance: 4.8,
         period: 1.769,
@@ -168,6 +184,8 @@ export const planets = [
       },
       {
         name: 'Europa',
+        radiusKm: 1560.8,
+        orbitKm: 671034,
         radius: 0.0625,
         distance: 5.9,
         period: 3.551,
@@ -175,6 +193,8 @@ export const planets = [
       },
       {
         name: 'Ganymede',
+        radiusKm: 2634.1,
+        orbitKm: 1070412,
         radius: 0.1055,
         distance: 7.3,
         period: 7.155,
@@ -182,6 +202,8 @@ export const planets = [
       },
       {
         name: 'Callisto',
+        radiusKm: 2410.3,
+        orbitKm: 1882709,
         radius: 0.0965,
         distance: 9.2,
         period: 16.689,
@@ -206,6 +228,8 @@ export const planets = [
     color: '#ead7a4',
     radius: 2.4,
     distance: 48,
+    au: 9.537, // real semi-major axis, for the Sun's apparent size in eclipses
+    radiusKm: 58232,
     period: 10759.22,
     rotationHours: 10.656,
     tilt: 26.73,
@@ -220,6 +244,8 @@ export const planets = [
       {
         // Titan's thick orange haze hides its surface in visible light, so it is drawn as smooth haze
         name: 'Titan',
+        radiusKm: 2574.7,
+        orbitKm: 1221870,
         radius: 0.106,
         distance: 8.5,
         period: 15.945,
@@ -250,6 +276,8 @@ export const planets = [
     color: '#a6e6ea',
     radius: 1.6,
     distance: 59,
+    au: 19.19, // real semi-major axis, for the Sun's apparent size in eclipses
+    radiusKm: 25362,
     period: 30688.5,
     rotationHours: 17.24,
     tilt: 97.77,
@@ -275,6 +303,8 @@ export const planets = [
     color: '#5b82f0',
     radius: 1.55,
     distance: 69,
+    au: 30.07, // real semi-major axis, for the Sun's apparent size in eclipses
+    radiusKm: 24622,
     period: 60182,
     rotationHours: 16.11,
     tilt: 28.32,

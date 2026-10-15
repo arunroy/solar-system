@@ -2,12 +2,14 @@ import * as THREE from 'three'
 import { createPlanetMaterial } from '../shaders/planet.js'
 import { createEarthMaterial } from '../shaders/earth.js'
 import { loadTexture } from '../shaders/textures.js'
+import { MAX_OCCLUDERS, occluderRatio } from '../shaders/eclipses.js'
 import { createLabel, createOrbit } from './helpers.js'
 
 const TAU = Math.PI * 2
 // Real rotation rates would turn Jupiter into a blur at high time speeds, so spin is slowed and capped
 const SPIN_SCALE = 0.01
 const MAX_SPIN = 1.5 // rad per real second
+const scratch = new THREE.Vector3()
 
 const ringVertexShader = /* glsl */ `
   uniform float uInner;
@@ -95,6 +97,7 @@ export class Planet {
 
     if (data.rings) this.createRings(data.rings)
     this.moons = (data.moons ?? []).map((moon) => this.createMoon(moon))
+    this.setUpEclipses()
 
     // Generous invisible sphere so small planets are easy to click from far away
     this.hitTarget = new THREE.Mesh(
@@ -166,7 +169,34 @@ export class Planet {
       ),
     )
     ;(equatorial ? this.tilt : this.group).add(pivot)
-    return { pivot, period }
+    return { pivot, period, mesh: moon, radius }
+  }
+
+  /** Moons shadow the planet (solar eclipses, shadow transits) and the planet shadows its moons. */
+  setUpEclipses() {
+    const { au, radiusKm, moons = [] } = this.data
+    const planet = this.mesh.material.uniforms
+    planet.uOccluderCount.value = Math.min(this.moons.length, MAX_OCCLUDERS)
+    this.moons.slice(0, MAX_OCCLUDERS).forEach((moon, i) => {
+      const { radiusKm: moonKm, orbitKm } = moons[i]
+      planet.uOccluderRatios.value[i] = occluderRatio(moonKm, orbitKm - radiusKm, au)
+      planet.uOccluders.value[i].w = moon.radius
+      const uniforms = moon.mesh.material.uniforms
+      uniforms.uOccluderCount.value = 1
+      uniforms.uOccluderRatios.value[0] = occluderRatio(radiusKm, orbitKm, au)
+      uniforms.uOccluders.value[0].w = this.radius
+      if (this.data.shadowGlow) uniforms.uOccluderGlows.value[0].set(this.data.shadowGlow)
+    })
+  }
+
+  updateEclipses() {
+    const planet = this.mesh.material.uniforms
+    this.group.updateMatrixWorld(true)
+    this.moons.slice(0, MAX_OCCLUDERS).forEach((moon, i) => {
+      moon.mesh.getWorldPosition(scratch)
+      planet.uOccluders.value[i].set(scratch.x, scratch.y, scratch.z, moon.radius)
+      moon.mesh.material.uniforms.uOccluders.value[0].set(...this.group.position.toArray(), this.radius)
+    })
   }
 
   /** World position. Planets are direct children of the scene, so local = world. */
@@ -188,6 +218,7 @@ export class Planet {
     this.mesh.material.uniforms.uTime.value = elapsed
 
     for (const moon of this.moons) moon.pivot.rotation.y = ((days / moon.period) % 1) * TAU
+    this.updateEclipses()
     if (this.ringUniforms) this.ringUniforms.uPlanetCenter.value.copy(this.group.position)
   }
 }

@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { simplexNoise3D, fbm3D } from './noise.js'
 import { loadTexture } from './textures.js'
+import { eclipseShadow, createEclipseUniforms } from './eclipses.js'
 
 // Surfaces are either real imagery ('map': an equirectangular image, see README) or procedural
 // ('rocky', 'gas'): noise sampled on the unit sphere in object space, with no seams or downloads.
@@ -59,6 +60,7 @@ const fragmentShader = /* glsl */ `
 
   ${simplexNoise3D}
   ${fbm3D}
+  ${eclipseShadow}
 
   vec3 rocky(vec3 p) {
     float n = fbm(p * 2.2 + uSeed);
@@ -101,7 +103,7 @@ const fragmentShader = /* glsl */ `
     float NdotL = dot(N, L);
 
     // Rings: follow the ray toward the Sun to the ring plane and dim sunlight by the ring density there
-    float sunlight = 1.0;
+    vec3 sunlight = vec3(1.0);
     float denom = dot(L, uRingNormal);
     if (uRingShadow > 0.5 && abs(denom) > 1e-4) {
       float t = dot(uRingCenter - vWorld, uRingNormal) / denom;
@@ -109,6 +111,7 @@ const fragmentShader = /* glsl */ `
       float u = (r - uRingRadii.x) / (uRingRadii.y - uRingRadii.x);
       if (t > 0.0 && u > 0.0 && u < 1.0) sunlight -= texture2D(uRingMap, vec2(u, 0.5)).a * 0.85;
     }
+    sunlight *= eclipseLight(vWorld, L);
 
     // Minnaert reflectance: mu0^k * mu^(k-1). Gas giants' hazy upper atmospheres dim their limbs
     float NdotV = max(dot(N, V), 1e-3);
@@ -162,6 +165,7 @@ export function createPlanetMaterial(surface) {
       uRingCenter: { value: new THREE.Vector3() },
       uRingNormal: { value: new THREE.Vector3(0, 1, 0) },
       uRingRadii: { value: new THREE.Vector2() },
+      ...createEclipseUniforms(),
     },
   })
 }
