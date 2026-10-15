@@ -1,7 +1,9 @@
 // Scene units are compressed for viewing: `radius` and `distance` are visual, not to scale.
 // Orbital periods are real (Earth days), and `L0` is each planet's mean longitude at J2000
 // in degrees, so planets sit at roughly their real heliocentric longitude for the shown date.
-// Rotation periods are real (hours; negative = retrograde) but sped down visually.
+// Rotation periods are real (hours) but sped down visually. `tilt` is the obliquity of the right-hand-rule
+// pole and `poleLongitude` is the heliocentric ecliptic longitude it leans toward (from the IAU pole RA/Dec),
+// so a tilt over 90° (Venus, Uranus) is what makes the spin retrograde; periods are never negative.
 // Moon counts are as of 2025 and change as new moons are confirmed.
 
 export const sun = {
@@ -32,6 +34,7 @@ export const planets = [
     period: 87.969,
     rotationHours: 1407.6,
     tilt: 0.03,
+    poleLongitude: 318.2,
     L0: 252.2503,
     surface: { type: 'map', map: 'textures/mercury.jpg' },
     description:
@@ -53,8 +56,9 @@ export const planets = [
     radius: 0.95,
     distance: 12.5,
     period: 224.701,
-    rotationHours: -5832.5,
+    rotationHours: 5832.5,
     tilt: 177.4,
+    poleLongitude: 210.2, // opposite the IAU north pole (λ 30.2°), which Venus spins backwards around
     L0: 181.9791,
     // Venus's cloud tops, not the radar-mapped ground hidden beneath them
     surface: { type: 'map', map: 'textures/venus_atmosphere.jpg', atmosphere: { color: '#ffd9a0', strength: 0.6 } },
@@ -118,6 +122,7 @@ export const planets = [
     period: 686.98,
     rotationHours: 24.623,
     tilt: 25.19,
+    poleLongitude: 352.9,
     L0: 355.4533,
     surface: { type: 'map', map: 'textures/mars.jpg', atmosphere: { color: '#ff9a6a', strength: 0.35 } },
     description:
@@ -141,6 +146,7 @@ export const planets = [
     period: 4332.59,
     rotationHours: 9.925,
     tilt: 3.13,
+    poleLongitude: 247.8,
     L0: 34.3964,
     surface: { type: 'map', map: 'textures/jupiter.jpg', atmosphere: { color: '#ffe2b8', strength: 0.3 } },
     description:
@@ -189,8 +195,9 @@ export const planets = [
     radius: 1.6,
     distance: 59,
     period: 30688.5,
-    rotationHours: -17.24,
+    rotationHours: 17.24,
     tilt: 97.77,
+    poleLongitude: 77.6, // opposite the IAU north pole (λ 257.6°), which Uranus spins backwards around
     L0: 313.2381,
     surface: { type: 'map', map: 'textures/uranus.jpg', atmosphere: { color: '#bff6ff', strength: 0.8 } },
     rings: { inner: 1.5, outer: 2.0, colors: ['#6f8a8f', '#a9c4c7'], opacity: 0.3 },
@@ -215,6 +222,7 @@ export const planets = [
     period: 60182,
     rotationHours: 16.11,
     tilt: 28.32,
+    poleLongitude: 319.2,
     L0: 304.88,
     surface: { type: 'map', map: 'textures/neptune.jpg', atmosphere: { color: '#6f9bff', strength: 1 } },
     description:
