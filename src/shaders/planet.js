@@ -37,6 +37,7 @@ const fragmentShader = /* glsl */ `
   uniform vec4 uSpot; // lat (rad), lon (rad), size, strength
   uniform vec3 uAtmoColor;
   uniform float uAtmo;
+  uniform float uMinnaert; // limb darkening exponent k: 1 = plain Lambert, > 1 darkens toward the limb
   // Shadow cast by a ring image (see Planet.createRings): plane through the planet centre, world units
   uniform float uRingShadow;
   uniform sampler2D uRingMap;
@@ -100,7 +101,11 @@ const fragmentShader = /* glsl */ `
       if (t > 0.0 && u > 0.0 && u < 1.0) sunlight -= texture2D(uRingMap, vec2(u, 0.5)).a * 0.85;
     }
 
-    vec3 lit = color * (0.02 + max(NdotL, 0.0) * 1.05 * sunlight);
+    // Minnaert reflectance: mu0^k * mu^(k-1). Gas giants' hazy upper atmospheres dim their limbs
+    float NdotV = max(dot(N, V), 1e-3);
+    float diffuse = pow(max(NdotL, 0.0), uMinnaert) * pow(NdotV, uMinnaert - 1.0);
+
+    vec3 lit = color * (0.02 + diffuse * 1.05 * sunlight);
 
     // Atmospheric rim light, only on the day side and the terminator
     float fresnel = pow(1.0 - max(dot(N, V), 0.0), 3.0);
@@ -138,6 +143,7 @@ export function createPlanetMaterial(surface) {
       },
       uAtmoColor: { value: color(surface.atmosphere?.color) },
       uAtmo: { value: surface.atmosphere?.strength ?? 0 },
+      uMinnaert: { value: surface.limbDarkening ?? 1 },
       uRingShadow: { value: 0 },
       uRingMap: { value: null },
       uRingCenter: { value: new THREE.Vector3() },

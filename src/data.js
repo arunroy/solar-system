@@ -148,7 +148,7 @@ export const planets = [
     tilt: 3.13,
     poleLongitude: 247.8,
     L0: 34.3964,
-    surface: { type: 'map', map: 'textures/jupiter.jpg', atmosphere: { color: '#ffe2b8', strength: 0.3 } },
+    surface: { type: 'map', map: 'textures/jupiter.jpg', limbDarkening: 1.2, atmosphere: { color: '#ffe2b8', strength: 0.3 } },
     description:
       'The largest planet, more than twice as massive as all the others combined. Its Great Red Spot is a storm wider than Earth.',
     facts: [
@@ -174,7 +174,7 @@ export const planets = [
     // right times, most recently in May 2025, and their shadow falls on the right hemisphere
     poleLongitude: 79.5,
     L0: 49.9554,
-    surface: { type: 'map', map: 'textures/saturn.jpg', atmosphere: { color: '#ffeccc', strength: 0.3 } },
+    surface: { type: 'map', map: 'textures/saturn.jpg', limbDarkening: 1.2, atmosphere: { color: '#ffeccc', strength: 0.3 } },
     // The ring image runs from 1.19 to 2.33 Saturn radii: C ring, B ring, Cassini division, A ring
     rings: { inner: 1.19, outer: 2.33, map: 'textures/saturn_ring.png' },
     description: 'A gas giant famous for its bright rings of ice and rock. It is the only planet less dense than water.',
@@ -199,7 +199,7 @@ export const planets = [
     tilt: 97.77,
     poleLongitude: 77.6, // opposite the IAU north pole (λ 257.6°), which Uranus spins backwards around
     L0: 313.2381,
-    surface: { type: 'map', map: 'textures/uranus.jpg', atmosphere: { color: '#bff6ff', strength: 0.8 } },
+    surface: { type: 'map', map: 'textures/uranus.jpg', limbDarkening: 1.35, atmosphere: { color: '#bff6ff', strength: 0.8 } },
     rings: { inner: 1.5, outer: 2.0, colors: ['#6f8a8f', '#a9c4c7'], opacity: 0.3 },
     description:
       'An ice giant tipped on its side, with an axial tilt of about 98°. Each pole gets around 42 years of continuous sunlight followed by 42 years of darkness.',
@@ -224,7 +224,7 @@ export const planets = [
     tilt: 28.32,
     poleLongitude: 319.2,
     L0: 304.88,
-    surface: { type: 'map', map: 'textures/neptune.jpg', atmosphere: { color: '#6f9bff', strength: 1 } },
+    surface: { type: 'map', map: 'textures/neptune.jpg', limbDarkening: 1.3, atmosphere: { color: '#6f9bff', strength: 1 } },
     description:
       'The most distant planet: a deep-blue ice giant with the fastest winds in the solar system, topping 2,000 km/h.',
     facts: [
