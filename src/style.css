@@ -231,6 +231,63 @@ button {
   text-align: right;
 }
 
+/* ---------- Spaceship HUD ---------- */
+.text-btn[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.flight {
+  position: fixed;
+  left: var(--gutter);
+  bottom: 100px;
+  width: min(300px, calc(100vw - 2 * var(--gutter)));
+  padding: 12px 14px;
+  font-size: 0.85rem;
+}
+.flight[hidden] {
+  display: none;
+}
+.flight__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+}
+.flight__bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.flight__bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #6fb6ff, #c9e6ff);
+}
+.flight__boost {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9fd2ff;
+}
+.flight__near {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+.flight__near strong {
+  color: var(--text);
+  font-weight: 500;
+}
+.flight__keys {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.55);
+}
+
 /* ---------- Dock ---------- */
 .dock {
   position: fixed;
@@ -348,6 +405,10 @@ kbd {
   }
   .footnote {
     display: none;
+  }
+  .flight {
+    top: 76px;
+    bottom: auto;
   }
   .dock {
     bottom: var(--gutter);

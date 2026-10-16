@@ -28,6 +28,7 @@
         <output id="speed-value"></output>
       </label>
       <button id="today" class="text-btn" type="button">Today</button>
+      <button id="fly" class="text-btn" type="button" aria-pressed="false" title="Fly a spaceship (F)">Fly</button>
       <div class="toggles">
         <label><input id="toggle-orbits" type="checkbox" checked /> Orbits</label>
         <label><input id="toggle-labels" type="checkbox" checked /> Labels</label>
@@ -42,11 +43,25 @@
       <dl id="info-facts" class="info__facts"></dl>
     </aside>
 
+    <section id="flight" class="panel flight" aria-label="Spaceship" hidden>
+      <div class="flight__row">
+        <span>Speed</span>
+        <span class="flight__bar"><span id="flight-speed"></span></span>
+        <span id="flight-boost" class="flight__boost" hidden>Boost</span>
+      </div>
+      <p class="flight__near">Near <strong id="flight-near"></strong></p>
+      <p class="flight__keys">
+        <kbd>W</kbd>/<kbd>S</kbd> thrust · <kbd>A</kbd>/<kbd>D</kbd> turn · <kbd>↑</kbd>/<kbd>↓</kbd> dive/climb ·
+        <kbd>Shift</kbd> boost · <kbd>Esc</kbd> exit
+      </p>
+    </section>
+
     <nav id="dock" class="dock" aria-label="Celestial bodies"></nav>
 
     <p class="footnote">
       Sizes &amp; distances not to scale · Drag to orbit · Scroll to zoom · Click a planet ·
-      <kbd>Space</kbd> pause · <kbd>Esc</kbd> overview · <kbd>0</kbd>–<kbd>8</kbd> jump
+      <kbd>Space</kbd> pause · <kbd>Esc</kbd> overview · <kbd>0</kbd>–<kbd>8</kbd> jump ·
+      <kbd>F</kbd> fly
     </p>
 
     <script type="module" src="/src/main.js"></script>

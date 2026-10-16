@@ -27,6 +27,25 @@ function showInfo(body) {
   info.hidden = false
 }
 
+let speedBeforeFlight = null
+
+function showFlight(flying) {
+  const fly = $('#fly')
+  fly.setAttribute('aria-pressed', String(flying))
+  fly.textContent = flying ? 'Exit ship' : 'Fly'
+  $('#flight').hidden = !flying
+  // Slow time right down while flying, so the planets don't race past the ship, and restore it afterwards
+  // unless the speed was changed in flight
+  const speed = $('#speed')
+  if (flying) {
+    speedBeforeFlight = speed.value
+    speed.value = 0
+  } else if (speedBeforeFlight !== null && speed.value === '0') {
+    speed.value = speedBeforeFlight
+  }
+  speed.dispatchEvent(new Event('input'))
+}
+
 function formatSpeed(daysPerSecond) {
   if (daysPerSecond >= 365) return `${(daysPerSecond / 365.25).toFixed(daysPerSecond >= 3652 ? 0 : 1)} yr/s`
   if (daysPerSecond >= 1) return `${daysPerSecond.toFixed(daysPerSecond >= 10 ? 0 : 1)} days/s`
@@ -55,6 +74,11 @@ function setupControls(system) {
   $('#toggle-orbits').addEventListener('change', (e) => system.setOrbitsVisible(e.target.checked))
   $('#toggle-labels').addEventListener('change', (e) => system.setLabelsVisible(e.target.checked))
   $('#info-close').addEventListener('click', () => system.clearFocus())
+  const toggleFlying = () => (system.flying ? system.stopFlying() : system.startFlying())
+  $('#fly').addEventListener('click', (e) => {
+    toggleFlying()
+    e.currentTarget.blur() // so Space and the arrow keys go to the ship, not the button
+  })
 
   const dock = $('#dock')
   system.bodies.forEach((body, i) => {
@@ -73,7 +97,10 @@ function setupControls(system) {
       e.preventDefault()
       togglePause()
     } else if (e.key === 'Escape') {
-      system.clearFocus()
+      if (system.flying) system.stopFlying()
+      else system.clearFocus()
+    } else if (e.code === 'KeyF' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      toggleFlying()
     } else if (/^[0-8]$/.test(e.key)) {
       system.focusByIndex(Number(e.key))
     }
@@ -81,23 +108,32 @@ function setupControls(system) {
 
   // The date only changes once per simulated day, so avoid needless DOM writes
   const dateEl = $('#date')
+  const speedBar = $('#flight-speed')
+  const boost = $('#flight-boost')
+  const near = $('#flight-near')
   let shown = ''
-  const updateDate = () => {
+  const updateHud = () => {
     const date = system.date
     const text = dateFormat.format(date)
     if (text !== shown) {
       dateEl.textContent = shown = text
       dateEl.dateTime = date.toISOString().slice(0, 10)
     }
-    requestAnimationFrame(updateDate)
+    if (system.flying) {
+      speedBar.style.width = `${Math.min(100, system.ship.speedShare * 100).toFixed(1)}%`
+      boost.hidden = !system.ship.boosting
+      const name = system.nearestBody().data.name
+      if (near.textContent !== name) near.textContent = name
+    }
+    requestAnimationFrame(updateHud)
   }
-  updateDate()
+  updateHud()
 }
 
 const hideLoader = () => $('#loader').classList.add('is-hidden')
 
 try {
-  const system = new SolarSystem($('#scene'), { onSelect: showInfo })
+  const system = new SolarSystem($('#scene'), { onSelect: showInfo, onFlyChange: showFlight })
   setupControls(system)
   // Wait for the planet textures, but never keep the loader up for more than a few seconds
   Promise.race([system.ready, new Promise((resolve) => setTimeout(resolve, 8000))]).then(hideLoader)
