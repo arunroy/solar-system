@@ -45,16 +45,37 @@
 
     <section id="flight" class="panel flight" aria-label="Spaceship" hidden>
       <div class="flight__row">
-        <span>Speed</span>
-        <span class="flight__bar"><span id="flight-speed"></span></span>
+        <span>Engine</span>
+        <span class="flight__bar"><span id="flight-throttle"></span></span>
         <span id="flight-boost" class="flight__boost" hidden>Boost</span>
+        <button id="flight-assist" class="text-btn flight__toggle" type="button" aria-pressed="false" title="Flight assist (Z)">Assist off</button>
+        <button id="flight-sound" class="text-btn flight__toggle" type="button" aria-pressed="true" title="Sound (M)">Sound on</button>
       </div>
+      <dl class="flight__readouts">
+        <dt>Speed</dt>
+        <dd id="flight-speed"></dd>
+        <dt>Altitude</dt>
+        <dd id="flight-altitude"></dd>
+        <dt>Periapsis</dt>
+        <dd id="flight-periapsis"></dd>
+        <dt>Apoapsis</dt>
+        <dd id="flight-apoapsis"></dd>
+        <dt>Period</dt>
+        <dd id="flight-period"></dd>
+      </dl>
       <p class="flight__near"><strong id="flight-near"></strong></p>
       <p class="flight__keys">
-        <kbd>W</kbd>/<kbd>S</kbd> thrust · <kbd>A</kbd>/<kbd>D</kbd> turn · <kbd>↑</kbd>/<kbd>↓</kbd> dive/climb ·
-        <kbd>Shift</kbd> boost · <kbd>X</kbd> hold position · <kbd>Esc</kbd> exit
+        <kbd>W</kbd> engine · <kbd>S</kbd> back · <kbd>A</kbd>/<kbd>D</kbd> yaw · <kbd>↑</kbd>/<kbd>↓</kbd> pitch ·
+        <kbd>Q</kbd>/<kbd>E</kbd> roll · <kbd>Shift</kbd> boost · <kbd>P</kbd>/<kbd>R</kbd> point prograde/retrograde ·
+        <kbd>X</kbd> hold position · <kbd>Z</kbd> flight assist · <kbd>M</kbd> sound · <kbd>Esc</kbd> exit
       </p>
     </section>
+
+    <div id="flight-markers" class="markers" aria-hidden="true" hidden>
+      <span id="marker-nose" class="marker marker--nose"></span>
+      <span id="marker-prograde" class="marker marker--prograde" title="Prograde"></span>
+      <span id="marker-retrograde" class="marker marker--retrograde" title="Retrograde"></span>
+    </div>
 
     <nav id="dock" class="dock" aria-label="Celestial bodies"></nav>
 

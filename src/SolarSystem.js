@@ -11,6 +11,7 @@ import { AsteroidBelt } from './objects/AsteroidBelt.js'
 import { Spaceship } from './objects/Spaceship.js'
 import { Gravity } from './gravity.js'
 import { RingCollider, BeltCollider } from './colliders.js'
+import { ShipAudio } from './audio.js'
 import { createStars } from './objects/Stars.js'
 import { textureManager } from './shaders/textures.js'
 import { sun as sunData, planets as planetData, asteroidBelt } from './data.js'
@@ -85,6 +86,7 @@ export class SolarSystem {
 
     this.ship = new Spaceship()
     this.gravity = new Gravity(this.sun, this.planets)
+    this.shipAudio = new ShipAudio()
     this.scene.add(this.ship.group, this.ship.trajectory)
 
     this.bodies = [this.sun, ...this.planets] // the dock and keys 0–8
@@ -272,6 +274,7 @@ export class SolarSystem {
     this.camera.updateProjectionMatrix()
     this.chaseOffset.copy(CHASE_OFFSET).applyQuaternion(this.ship.group.quaternion)
     this.updateChaseCamera(0)
+    this.shipAudio.start()
     this.onFlyChange(true)
   }
 
@@ -280,13 +283,26 @@ export class SolarSystem {
     if (!this.flying) return
     this.flying = false
     this.ship.park()
+    this.shipAudio.stop()
     this.controls.target.copy(this.ship.position)
     this.controls.minDistance = 0.2
     this.controls.enabled = true
     this.camera.near = 0.05
     this.camera.fov = FOV
+    this.camera.up.copy(UP) // OrbitControls orbits about the camera's up
     this.camera.updateProjectionMatrix()
     this.onFlyChange(false)
+  }
+
+  /**
+   * Where a direction from the ship (prograde, the nose…) points on screen, as CSS pixels from the canvas's
+   * top left, or null when it points behind the camera.
+   */
+  screenDirection(direction) {
+    const point = this.ship.position.clone().addScaledVector(direction, 1000).project(this.camera)
+    if (point.z > 1) return null
+    const canvas = this.renderer.domElement
+    return { x: ((point.x + 1) / 2) * canvas.clientWidth, y: ((1 - point.y) / 2) * canvas.clientHeight }
   }
 
   /** The body whose surface is closest to the ship. */
@@ -307,8 +323,11 @@ export class SolarSystem {
     const desired = CHASE_OFFSET.clone()
       .multiplyScalar(1 + ship.speedShare * 0.8)
       .applyQuaternion(ship.group.quaternion)
-    this.chaseOffset.lerp(desired, 1 - Math.exp(-5 * dt))
+    const ease = 1 - Math.exp(-5 * dt)
+    this.chaseOffset.lerp(desired, ease)
     this.camera.position.copy(ship.position).add(this.chaseOffset)
+    // Roll with the ship, so its "up" stays up on screen
+    this.camera.up.lerp(ship.up, dt ? ease : 1).normalize()
     this.camera.lookAt(ship.position.clone().addScaledVector(ship.forward, 0.4))
     // Widen the view while boosting, for a sense of speed
     const fov = THREE.MathUtils.damp(this.camera.fov, FOV + (ship.boosting ? 12 : 0), 3, dt)
@@ -328,6 +347,7 @@ export class SolarSystem {
     this.belt.update(this.days, dt, this.elapsed)
     this.gravity.update(dt)
     this.ship.update(dt, this.gravity, this.solidBodies, this.obstacles)
+    if (this.flying) this.shipAudio.update(this.ship)
   }
 
   updateCamera(dt) {

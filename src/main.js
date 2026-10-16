@@ -66,6 +66,62 @@ function flightStatus(system) {
   }
 }
 
+const SUN_RADIUS_KM = 696_000
+const radiusKmOf = (body) => body.data.radiusKm ?? SUN_RADIUS_KM
+
+function formatDistance(km) {
+  if (km >= 1e6) return `${(km / 1e6).toFixed(km >= 1e7 ? 0 : 1)} million km`
+  if (km >= 100) return `${Math.round(km).toLocaleString('en')} km`
+  return `${km.toFixed(1)} km`
+}
+
+function formatDuration(seconds) {
+  if (seconds < 7200) return `${Math.round(seconds / 60)} min`
+  if (seconds < 172_800) return `${(seconds / 3600).toFixed(1)} h`
+  return `${(seconds / 86_400).toFixed(1)} days`
+}
+
+/**
+ * The flight instruments. Sizes and distances in the scene are compressed, so heights are given in the
+ * body's real kilometres at the same height in body radii, and speeds as the real speed of the same orbit
+ * (see Gravity.realSpeed): a low circular orbit of Earth reads about 7.8 km/s and 90 minutes, as it should.
+ */
+function flightReadouts(system) {
+  const { ship, gravity } = system
+  const ref = ship.frameBody ?? system.sun
+  const kms = gravity.realSpeed(ship.frame, ship.velocity.length())
+  const speed = kms < 1 ? `${Math.round(kms * 1000)} m/s` : `${kms.toFixed(kms >= 10 ? 1 : 2)} km/s`
+
+  const near = system.nearestBody()
+  const gap = Math.max(0, near.position.distanceTo(ship.position) - near.radius - ship.hitRadius)
+  const readouts = {
+    speed: `${speed} relative to ${nameOf(ref)}`,
+    altitude: `${formatDistance((gap / near.radius) * radiusKmOf(near))} above ${nameOf(near)}`,
+    periapsis: '—',
+    apoapsis: '—',
+    period: '—',
+  }
+  // The orbit round the planet whose pull the ship is in (round the Sun, distances aren't to any one scale)
+  const { orbit } = ship
+  if (ship.frame && orbit) {
+    const R = ref.radius
+    const km = radiusKmOf(ref)
+    // Heights of the hull above the surface, as for the altitude, so "below the surface" means a landing
+    const surface = R + ship.hitRadius
+    const height = (r) => formatDistance(Math.max(0, ((r - surface) / R) * km))
+    readouts.periapsis = orbit.periapsis < surface ? 'below the surface' : height(orbit.periapsis)
+    if (orbit.apoapsis === Infinity) readouts.apoapsis = `escapes ${nameOf(ref)}`
+    else if (orbit.apoapsis > ship.frame.soi) readouts.apoapsis = `${height(orbit.apoapsis)}, beyond its pull`
+    else readouts.apoapsis = height(orbit.apoapsis)
+    if (orbit.status === 'orbit') {
+      // Kepler's third law for the same orbit, in body radii, round the real body
+      const seconds = 2 * Math.PI * Math.sqrt(((orbit.a / R) ** 3 * km * 1000) / ref.data.gravity)
+      readouts.period = formatDuration(seconds)
+    }
+  }
+  return readouts
+}
+
 function formatSpeed(daysPerSecond) {
   if (daysPerSecond >= 365) return `${(daysPerSecond / 365.25).toFixed(daysPerSecond >= 3652 ? 0 : 1)} yr/s`
   if (daysPerSecond >= 1) return `${daysPerSecond.toFixed(daysPerSecond >= 10 ? 0 : 1)} days/s`
@@ -95,6 +151,35 @@ function setupControls(system) {
   $('#toggle-labels').addEventListener('change', (e) => system.setLabelsVisible(e.target.checked))
   $('#info-close').addEventListener('click', () => system.clearFocus())
   const toggleFlying = () => (system.flying ? system.stopFlying() : system.startFlying())
+  const sound = $('#flight-sound')
+  const showSound = () => {
+    const on = !system.shipAudio.muted
+    sound.setAttribute('aria-pressed', String(on))
+    sound.textContent = on ? 'Sound on' : 'Sound off'
+  }
+  const toggleSound = () => {
+    system.shipAudio.setMuted(!system.shipAudio.muted)
+    showSound()
+  }
+  showSound()
+  sound.addEventListener('click', (e) => {
+    toggleSound()
+    e.currentTarget.blur()
+  })
+  const assist = $('#flight-assist')
+  const showAssist = () => {
+    assist.setAttribute('aria-pressed', String(system.ship.assist))
+    assist.textContent = system.ship.assist ? 'Assist on' : 'Assist off'
+  }
+  const toggleAssist = () => {
+    system.ship.setAssist(!system.ship.assist)
+    showAssist()
+  }
+  showAssist()
+  assist.addEventListener('click', (e) => {
+    toggleAssist()
+    e.currentTarget.blur()
+  })
   $('#fly').addEventListener('click', (e) => {
     toggleFlying()
     e.currentTarget.blur() // so Space and the arrow keys go to the ship, not the button
@@ -121,6 +206,10 @@ function setupControls(system) {
       else system.clearFocus()
     } else if (e.code === 'KeyF' && !e.ctrlKey && !e.metaKey && !e.altKey) {
       toggleFlying()
+    } else if (e.code === 'KeyM' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      toggleSound()
+    } else if (e.code === 'KeyZ' && system.flying && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      toggleAssist()
     } else if (/^[0-8]$/.test(e.key)) {
       system.focusByIndex(Number(e.key))
     }
@@ -128,9 +217,21 @@ function setupControls(system) {
 
   // The date only changes once per simulated day, so avoid needless DOM writes
   const dateEl = $('#date')
-  const speedBar = $('#flight-speed')
+  const throttleBar = $('#flight-throttle')
   const boost = $('#flight-boost')
   const near = $('#flight-near')
+  const readoutEls = Object.fromEntries(
+    ['speed', 'altitude', 'periapsis', 'apoapsis', 'period'].map((key) => [key, $(`#flight-${key}`)]),
+  )
+  const markers = $('#flight-markers')
+  const nose = $('#marker-nose')
+  const prograde = $('#marker-prograde')
+  const retrograde = $('#marker-retrograde')
+  const place = (marker, direction) => {
+    const point = direction && system.screenDirection(direction)
+    marker.hidden = !point
+    if (point) marker.style.transform = `translate(${point.x.toFixed(1)}px, ${point.y.toFixed(1)}px)`
+  }
   let shown = ''
   const updateHud = () => {
     const date = system.date
@@ -139,11 +240,20 @@ function setupControls(system) {
       dateEl.textContent = shown = text
       dateEl.dateTime = date.toISOString().slice(0, 10)
     }
+    markers.hidden = !system.flying
     if (system.flying) {
-      speedBar.style.width = `${Math.min(100, system.ship.speedShare * 100).toFixed(1)}%`
-      boost.hidden = !system.ship.boosting
+      const { ship } = system
+      throttleBar.style.width = `${Math.min(100, Math.abs(ship.throttle) * 100).toFixed(1)}%`
+      boost.hidden = !ship.boosting
       const text = flightStatus(system)
       if (near.textContent !== text) near.textContent = text
+      for (const [key, value] of Object.entries(flightReadouts(system))) {
+        if (readoutEls[key].textContent !== value) readoutEls[key].textContent = value
+      }
+      const moving = !ship.landed && ship.velocity.lengthSq() > 1e-4
+      place(nose, ship.forward)
+      place(prograde, moving ? ship.velocity.clone().normalize() : null)
+      place(retrograde, moving ? ship.velocity.clone().normalize().negate() : null)
     }
     requestAnimationFrame(updateHud)
   }

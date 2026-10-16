@@ -240,7 +240,7 @@ button {
   position: fixed;
   left: var(--gutter);
   bottom: 100px;
-  width: min(300px, calc(100vw - 2 * var(--gutter)));
+  width: min(340px, calc(100vw - 2 * var(--gutter)));
   padding: 12px 14px;
   font-size: 0.85rem;
 }
@@ -272,6 +272,92 @@ button {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #9fd2ff;
+}
+.flight__toggle {
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+.flight__toggle[aria-pressed='false'] {
+  color: var(--muted);
+}
+.flight__readouts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  margin: 10px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.flight__readouts dt {
+  color: var(--muted);
+}
+.flight__readouts dd {
+  margin: 0;
+  color: var(--text);
+}
+
+/* Flight markers, drawn over the scene where the nose and the direction of motion point */
+.markers {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.markers[hidden] {
+  display: none;
+}
+.marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  color: #9fe6a0;
+}
+.marker[hidden] {
+  display: none;
+}
+/* Prograde: a circle with three spokes */
+.marker--prograde {
+  border: 2px solid currentColor;
+  background:
+    linear-gradient(currentColor, currentColor) 50% 0 / 2px 7px no-repeat,
+    linear-gradient(currentColor, currentColor) 0 50% / 7px 2px no-repeat,
+    linear-gradient(currentColor, currentColor) 100% 50% / 7px 2px no-repeat;
+  box-sizing: border-box;
+}
+.marker--prograde::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: currentColor;
+}
+/* Retrograde: a circle with a cross */
+.marker--retrograde {
+  border: 2px solid currentColor;
+  box-sizing: border-box;
+  background:
+    linear-gradient(45deg, transparent calc(50% - 1px), currentColor calc(50% - 1px), currentColor calc(50% + 1px), transparent calc(50% + 1px)),
+    linear-gradient(-45deg, transparent calc(50% - 1px), currentColor calc(50% - 1px), currentColor calc(50% + 1px), transparent calc(50% + 1px));
+}
+/* The nose: a small open cross */
+.marker--nose {
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.75);
+  background:
+    linear-gradient(currentColor, currentColor) 0 50% / 9px 2px no-repeat,
+    linear-gradient(currentColor, currentColor) 100% 50% / 9px 2px no-repeat,
+    linear-gradient(currentColor, currentColor) 50% 100% / 2px 9px no-repeat;
 }
 .flight__near {
   margin: 8px 0 0;

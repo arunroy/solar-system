@@ -10,6 +10,7 @@ const SUN_GM = 60
 // A planet's sphere of influence, r = d·(m/M)^0.4, is capped to a few radii beyond its moons, so the
 // giants' spheres don't swallow the space between them
 const SOI_CAP = 5
+const EARTH_ORBIT_KMS = 29.78 // Earth's real speed round the Sun
 
 /** Pull of a point mass `gm` at `center` on `point`, added to `out`. Inside `radius` it stops growing. */
 function addPull(out, center, gm, radius, point) {
@@ -35,12 +36,17 @@ export class Gravity {
     const source = (body, gm) => ({ body, gm, radius: body.radius, position: body.position.clone() })
     this.sun = source(sun, SUN_GM)
     this.sun.position.set(0, 0, 0)
+    // Orbital speeds scale as √(g·R), so a speed here maps to the real one by √(real g·R / scene g·R).
+    // Round the Sun, distances aren't scaled in proportion, so its scale is set from Earth's orbit instead.
+    const earth = planets.find((planet) => planet.id === 'earth')
+    this.sun.speedScale = EARTH_ORBIT_KMS / Math.sqrt(SUN_GM / earth.data.distance)
     this.planets = planets.map((planet) => {
       const gm = planet.data.gravity * G_SCALE * planet.radius ** 2
       const d = planet.data.distance
       const reach = Math.max(planet.radius * SOI_CAP, ...planet.moons.map((moon) => moon.data.distance + 2))
       return {
         ...source(planet, gm),
+        speedScale: Math.sqrt((planet.data.radiusKm * 1000) / (G_SCALE * planet.radius)) / 1000,
         soi: Math.min(d * (gm / SUN_GM) ** 0.4, reach),
         moons: planet.moons.map((moon) => source(moon, moon.data.gravity * G_SCALE * moon.radius ** 2)),
         velocity: new THREE.Vector3(),
@@ -89,21 +95,35 @@ export class Gravity {
   }
 
   /**
-   * Describes a coasting orbit about the frame's body from position and velocity (relative to that body):
-   * 'orbit' if it's closed and clears the surface, 'falling' if it meets the surface, 'escaping' if it's open
-   * (or, round a planet, reaches past its sphere of influence).
+   * The coasting orbit about the frame's body, from position and velocity (relative to that body): its
+   * semi-major axis `a`, eccentricity `e`, periapsis and apoapsis (distances from the centre; apoapsis is
+   * Infinity on an open orbit), and `status`: 'orbit' if it's closed and clears the surface, 'falling' if it
+   * comes within `clearance` of the surface, 'escaping' if it's open (or, round a planet, reaches past its sphere of influence).
    */
-  orbitAround(frame, point, velocity) {
+  orbitAround(frame, point, velocity, clearance = 0) {
     const center = frame ?? this.sun
     const r = point.clone().sub(center.position)
     const gm = center.gm
     const energy = velocity.lengthSq() / 2 - gm / r.length()
-    if (energy >= 0) return 'escaping'
-    const a = -gm / (2 * energy)
     const h = r.clone().cross(velocity)
     const e = Math.sqrt(Math.max(0, 1 + (2 * energy * h.lengthSq()) / (gm * gm)))
-    if (a * (1 - e) < center.radius) return 'falling'
-    if (frame && a * (1 + e) > frame.soi) return 'escaping'
-    return 'orbit'
+    // Periapsis from the angular momentum, which stays finite on open orbits too
+    const periapsis = h.lengthSq() / gm / (1 + e)
+    if (energy >= 0) return { status: 'escaping', a: Infinity, e, periapsis, apoapsis: Infinity }
+    const a = -gm / (2 * energy)
+    const apoapsis = a * (1 + e)
+    let status = 'orbit'
+    if (periapsis < center.radius + clearance) status = 'falling'
+    else if (frame && apoapsis > frame.soi) status = 'escaping'
+    return { status, a, e, periapsis, apoapsis }
+  }
+
+  /**
+   * Converts the ship's speed relative to `frame` (scene units/s) to the real speed in km/s of the same
+   * orbit at the same height, in body radii, round the real body. A circular orbit just above Earth then
+   * reads 7.9 km/s, as in low Earth orbit; round the Sun, Earth's distance maps to its real 29.8 km/s.
+   */
+  realSpeed(frame, speed) {
+    return speed * (frame ? frame.speedScale : this.sun.speedScale)
   }
 }

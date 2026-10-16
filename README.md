@@ -14,7 +14,7 @@ An interactive 3D model of the solar system built with [Three.js](https://threej
 - An **asteroid belt** of 2,500 rocks drawn in a single instanced draw call. The rocks part around the mouse pointer and drift back when it moves on.
 - **Time controls:** play and pause, a speed range from 2.4 hours/s to about 2.7 years/s, a jump back to today, and a live simulated date.
 - **Click to fly:** select a planet (or the Sun) in the scene, with its label, from the dock, or with keys `0`–`8`. The camera flies to it and follows it along its orbit, and a panel shows facts about it. Moons are clickable too: focusing a planet labels its moons, and selecting a moon flies to it.
-- **Fly a spaceship:** press `F` (or the Fly button) to take the controls of a small ship, launched beside the planet in focus, with a chase camera behind it. It steers arcade-style: it grips and goes where it points while the engine fires, and leans into turns. Gravity is real: each body pulls according to its true surface gravity, scaled for the scene, so with the engine off you fall, settle into orbit, or slingshot round a planet. A fading line shows the path you'll coast along, and the HUD says whether you're in orbit, falling, escaping or landed. You can land on any planet or moon, or hold position with the station-keeping thrusters. The ship also crashes into the asteroid belt's rocks and Saturn's rings. The rings are solid where they're dense (the A and B rings, read from the ring image) and open where they're faint, so you can thread the Cassini division. Near a planet, gravity follows patched conics, the approximation used to plan real missions: only that planet and its moons pull, and you're carried along with it. Without that, the Sun's tides at these compressed distances would tear apart any orbit wider than about a planet's diameter. Time slows to 2.4 hours/s while you fly, so the planets don't race past.
+- **Fly a spaceship:** press `F` (or the Fly button) to take the controls of a small crewed spacecraft, launched beside the planet in focus, with a chase camera behind it. It's built like a real one: a capsule with windows, a service module with radiators, two solar array wings, a gold-foiled engine bay and bell, four attitude thruster quads, a dish antenna and navigation lights. In vacuum its exhaust is a wide, faint plume rather than a flame, the engine bell glows as it heats, and the thrusters puff as they fire. The ship goes dark in a planet's or moon's shadow. It flies by Newton's laws. The engine only pushes forward, nothing slows the ship, and it keeps drifting the way it's going until you burn against that. Rotations start and stop on the attitude thrusters, and you can roll as well as yaw and pitch. `P` and `R` swing the nose to prograde or retrograde, as for a braking burn. `Z` turns on flight assist for arcade handling: speed limits, a reverse thrust, grip so the ship goes where it points, and wings that level themselves. The instruments show speed, altitude, periapsis, apoapsis and orbital period, with prograde and retrograde markers to steer by. Sizes and distances in the scene are compressed, so heights are given in the body's real kilometres at the same height in body radii, and speeds as the real speed of the same orbit: a low orbit of Earth reads about 7.7 km/s and 93 minutes. Gravity is real: each body pulls according to its true surface gravity, scaled for the scene, so with the engine off you fall, settle into orbit, or slingshot round a planet. A fading line shows the path you'll coast along, and the HUD says whether you're in orbit, falling, escaping or landed. You can land on any planet or moon, or hold position with the station-keeping thrusters. The ship also crashes into the asteroid belt's rocks and Saturn's rings. The rings are solid where they're dense (the A and B rings, read from the ring image) and open where they're faint, so you can thread the Cassini division. The ship has sound, synthesised live with the Web Audio API rather than played from files: a rumbling main engine that opens up with thrust, a roaring boost, hissing attitude thrusters, and thuds on impact, louder for harder hits. `M` mutes it. Near a planet, gravity follows patched conics, the approximation used to plan real missions: only that planet and its moons pull, and you're carried along with it. Without that, the Sun's tides at these compressed distances would tear apart any orbit wider than about a planet's diameter. Time slows to 2.4 hours/s while you fly, so the planets don't race past.
 - Toggles for orbit lines and labels, and a responsive layout.
 
 Sizes and distances are compressed so everything fits on screen. Periods and tilts are real.
@@ -38,11 +38,16 @@ npm run preview  # serve the production build locally
 | `Space` | Pause / play |
 | `Esc` | Back to overview (or leave the ship) |
 | `F` | Fly the spaceship / leave it |
-| `W` / `S` | Thrust / brake and reverse (in the ship) |
-| `A` / `D` or `←` / `→` | Turn (in the ship) |
-| `↑` / `↓` | Dive / climb (in the ship) |
+| `W` | Main engine (in the ship) |
+| `S` | Back off on the attitude thrusters (with flight assist: reverse thrust) |
+| `A` / `D` or `←` / `→` | Yaw (in the ship) |
+| `↑` / `↓` | Pitch: dive / climb (in the ship) |
+| `Q` / `E` | Roll (in the ship) |
 | `Shift` | Boost (in the ship) |
+| `P` / `R` | Point the nose prograde / retrograde (in the ship) |
 | `X` | Hold position: cancel gravity and come to a stop (in the ship) |
+| `Z` | Flight assist on / off: arcade handling (in the ship) |
+| `M` | Ship sound on / off |
 
 ## Project structure
 
@@ -55,16 +60,17 @@ npm run preview  # serve the production build locally
 | `src/objects/Moon.js` | A moon on its real orbit, clickable |
 | `src/ephemeris.js` | Where each moon is on its orbit for a given date |
 | `src/objects/AsteroidBelt.js` | Instanced asteroid belt |
-| `src/objects/Spaceship.js` | The flyable spaceship: model, flight, collisions and landing, and its predicted path |
-| `src/gravity.js` | Gravity for the ship: each body's pull, spheres of influence, orbit state |
+| `src/objects/Spaceship.js` | The flyable spaceship: model, plume and lights, Newtonian and assisted flight, collisions and landing, eclipse shading, and its predicted path |
+| `src/gravity.js` | Gravity for the ship: each body's pull, spheres of influence, orbit elements, real-speed scale |
 | `src/colliders.js` | Collisions with Saturn's rings and the asteroid belt's rocks |
+| `src/audio.js` | The ship's synthesised engine, jet and impact sounds |
 | `src/objects/Stars.js` | Background starfield |
 | `src/shaders/planet.js` | Planet surface shader: image maps or procedural noise |
 | `src/shaders/eclipses.js` | Eclipse shadows between planets and their moons |
 | `src/shaders/textures.js` | Shared texture loader that tracks loading progress |
 | `src/shaders/earth.js` | Earth shader: day and night imagery, clouds, ocean glint |
 | `public/textures/` | Planet, Moon and ring imagery |
-| `src/main.js` | HUD: info panel, dock, time controls, keyboard shortcuts |
+| `src/main.js` | HUD: info panel, dock, time controls, flight instruments and markers, keyboard shortcuts |
 
 ## Image credits
 
