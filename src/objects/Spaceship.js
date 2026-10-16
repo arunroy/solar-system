@@ -147,6 +147,7 @@ export class Spaceship {
     this.boosting = false
     this.holding = false
     this.landed = null // the body the ship is resting on
+    this.contactNormal = new THREE.Vector3(0, 1, 0) // the face it last touched
     this.status = 'falling' // 'orbit', 'falling', 'escaping', 'holding' or 'landed', for the HUD
     this.pressed = new Set()
     this.active = false
@@ -166,6 +167,10 @@ export class Spaceship {
 
   get forward() {
     return new THREE.Vector3(0, 0, -1).applyQuaternion(this.group.quaternion)
+  }
+
+  get hitRadius() {
+    return HIT_RADIUS
   }
 
   /** Speed as a share of the top speed with boost, for the HUD. */
@@ -225,8 +230,11 @@ export class Spaceship {
     this.frame = frame
   }
 
-  /** `bodies`: anything with a `position` and `radius` the ship can't fly through. */
-  update(dt, gravity, bodies) {
+  /**
+   * `bodies`: anything with a `position` and `radius` the ship can't fly through; `obstacles`: other
+   * colliders (rings, the asteroid belt) with a `collide(ship, from, thickness)` method.
+   */
+  update(dt, gravity, bodies, obstacles = []) {
     if (!this.active) return
     this.updateFrame(gravity)
 
@@ -270,15 +278,19 @@ export class Spaceship {
     for (const body of bodies) {
       if (this.collide(body, from)) this.landed = body
     }
+    for (const obstacle of obstacles) {
+      const touched = obstacle.collide(this, from, HIT_RADIUS)
+      if (touched) this.landed = touched
+    }
     if (this.landed && thrust <= 0) {
       // Resting on a surface: friction stops it sliding
-      const normal = this.group.position.clone().sub(this.landed.position).normalize()
+      const normal = this.contactNormal
       const sliding = v.clone().addScaledVector(normal, -v.dot(normal))
       v.addScaledVector(sliding, Math.exp(-FRICTION * dt) - 1)
     }
 
     this.updateStatus(gravity)
-    this.predict(gravity)
+    this.predict(gravity, obstacles)
 
     this.throttle = THREE.MathUtils.damp(this.throttle, thrust * (this.boosting ? 2 : 1), 8, dt)
     const flame = Math.max(this.throttle, 0)
@@ -294,7 +306,7 @@ export class Spaceship {
   }
 
   /** Coast forward under gravity alone (bodies held where they are now) to draw the path ahead. */
-  predict(gravity) {
+  predict(gravity, obstacles) {
     const positions = this.trajectory.geometry.attributes.position
     const p = this.group.position.clone()
     const v = this.velocity.clone()
@@ -305,7 +317,14 @@ export class Spaceship {
       positions.setXYZ(count, p.x, p.y, p.z)
       if (solids.some((s) => s.position.distanceToSquared(p) < s.radius * s.radius)) break
       v.addScaledVector(gravity.acceleration(p, this.frame, a), PREDICT_STEP)
+      const prev = p.clone()
       p.addScaledVector(v, PREDICT_STEP)
+      // The rings end the path too (the asteroids are too small and many to be worth it)
+      if (count + 1 < PREDICT_STEPS && obstacles.some((o) => o.hit?.(prev, p, 0))) {
+        positions.setXYZ(++count, p.x, p.y, p.z)
+        count++
+        break
+      }
     }
     positions.needsUpdate = true
     this.trajectory.geometry.setDrawRange(0, count)
@@ -341,10 +360,18 @@ export class Spaceship {
     const normal = hit.sub(center).normalize()
     if (normal.lengthSq() === 0) normal.set(0, 1, 0)
     to.copy(center).addScaledVector(normal, minDistance)
-    // Cancel the inward motion, bouncing back a little off hard impacts (gentle ones just settle)
+    this.bounce(normal)
+    return true
+  }
+
+  /**
+   * After touching a surface facing `normal`: cancel the inward motion, bouncing back a little off hard
+   * impacts (gentle ones just settle).
+   */
+  bounce(normal) {
+    this.contactNormal.copy(normal)
     const into = this.velocity.dot(normal)
     if (into < 0) this.velocity.addScaledVector(normal, -into * (into < -0.5 ? 1.4 : 1))
-    return true
   }
 }
 

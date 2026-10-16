@@ -10,6 +10,7 @@ import { Planet } from './objects/Planet.js'
 import { AsteroidBelt } from './objects/AsteroidBelt.js'
 import { Spaceship } from './objects/Spaceship.js'
 import { Gravity } from './gravity.js'
+import { RingCollider, BeltCollider } from './colliders.js'
 import { createStars } from './objects/Stars.js'
 import { textureManager } from './shaders/textures.js'
 import { sun as sunData, planets as planetData, asteroidBelt } from './data.js'
@@ -92,6 +93,11 @@ export class SolarSystem {
     this.hitTargets = clickable.map((b) => b.hitTarget)
     this.planetMeshes = this.planets.map((planet) => planet.mesh)
     this.solidBodies = clickable // what the spaceship bounces off
+    // Rings with a density image (Saturn's) and the asteroid belt's rocks stop the ship too
+    this.obstacles = [
+      ...this.planets.filter((planet) => planet.ringUniforms?.uHasMap.value).map((planet) => new RingCollider(planet)),
+      new BeltCollider(this.belt),
+    ]
     for (const body of clickable) {
       body.label.element.addEventListener('click', () => this.focusOn(body))
     }
@@ -321,7 +327,7 @@ export class SolarSystem {
     for (const planet of this.planets) planet.update(this.days, dtDays, dt, this.elapsed)
     this.belt.update(this.days, dt, this.elapsed)
     this.gravity.update(dt)
-    this.ship.update(dt, this.gravity, this.solidBodies)
+    this.ship.update(dt, this.gravity, this.solidBodies, this.obstacles)
   }
 
   updateCamera(dt) {
@@ -351,7 +357,8 @@ export class SolarSystem {
   updateHover() {
     // Rocks in the asteroid belt part around the cursor's point on the orbital plane
     this.raycaster.setFromCamera(this.pointer, this.camera)
-    const onPlane = this.pointerInside && this.raycaster.ray.intersectPlane(ORBITAL_PLANE, this.hoverPoint)
+    // (not while flying, as the ship collides with the rocks where they really are)
+    const onPlane = this.pointerInside && !this.flying && this.raycaster.ray.intersectPlane(ORBITAL_PLANE, this.hoverPoint)
     this.belt.setHover(onPlane ? this.hoverPoint : null, this.camera.position.distanceTo(this.hoverPoint))
 
     const hovered = this.pointerInside && !this.flight && !this.flying ? this.pick() : null
