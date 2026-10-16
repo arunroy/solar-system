@@ -9,6 +9,7 @@ import { Sun } from './objects/Sun.js'
 import { Planet } from './objects/Planet.js'
 import { AsteroidBelt } from './objects/AsteroidBelt.js'
 import { Spaceship } from './objects/Spaceship.js'
+import { Gravity } from './gravity.js'
 import { createStars } from './objects/Stars.js'
 import { textureManager } from './shaders/textures.js'
 import { sun as sunData, planets as planetData, asteroidBelt } from './data.js'
@@ -82,7 +83,8 @@ export class SolarSystem {
     this.scene.add(this.belt.mesh)
 
     this.ship = new Spaceship()
-    this.scene.add(this.ship.group)
+    this.gravity = new Gravity(this.sun, this.planets)
+    this.scene.add(this.ship.group, this.ship.trajectory)
 
     this.bodies = [this.sun, ...this.planets] // the dock and keys 0–8
     this.moons = this.planets.flatMap((planet) => planet.moons)
@@ -250,7 +252,7 @@ export class SolarSystem {
     const toSun = near === this.sun ? new THREE.Vector3(0, 0, 1) : center.clone().negate().normalize()
     const side = new THREE.Vector3().crossVectors(UP, toSun).normalize()
     const direction = toSun.multiplyScalar(0.6).add(side.multiplyScalar(0.7)).add(new THREE.Vector3(0, 0.2, 0)).normalize()
-    this.ship.launch(center.clone().addScaledVector(direction, near.radius * 3 + 0.6), center)
+    this.ship.launch(center.clone().addScaledVector(direction, near.radius * 3 + 0.6), center, this.gravity)
 
     this.focus = null
     this.flight = null
@@ -318,7 +320,8 @@ export class SolarSystem {
     this.sun.update(this.days, dtDays, dt, this.elapsed)
     for (const planet of this.planets) planet.update(this.days, dtDays, dt, this.elapsed)
     this.belt.update(this.days, dt, this.elapsed)
-    this.ship.update(dt, this.solidBodies)
+    this.gravity.update(dt)
+    this.ship.update(dt, this.gravity, this.solidBodies)
   }
 
   updateCamera(dt) {

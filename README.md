@@ -14,7 +14,7 @@ An interactive 3D model of the solar system built with [Three.js](https://threej
 - An **asteroid belt** of 2,500 rocks drawn in a single instanced draw call. The rocks part around the mouse pointer and drift back when it moves on.
 - **Time controls:** play and pause, a speed range from 2.4 hours/s to about 2.7 years/s, a jump back to today, and a live simulated date.
 - **Click to fly:** select a planet (or the Sun) in the scene, with its label, from the dock, or with keys `0`–`8`. The camera flies to it and follows it along its orbit, and a panel shows facts about it. Moons are clickable too: focusing a planet labels its moons, and selecting a moon flies to it.
-- **Fly a spaceship:** press `F` (or the Fly button) to take the controls of a small ship, launched beside the planet in focus, with a chase camera behind it. It handles arcade-style: it goes where it points, leans into turns, coasts to a stop, and bounces off the Sun, planets and moons. Time slows to 2.4 hours/s while you fly, so the planets don't race past.
+- **Fly a spaceship:** press `F` (or the Fly button) to take the controls of a small ship, launched beside the planet in focus, with a chase camera behind it. It steers arcade-style: it grips and goes where it points while the engine fires, and leans into turns. Gravity is real: each body pulls according to its true surface gravity, scaled for the scene, so with the engine off you fall, settle into orbit, or slingshot round a planet. A fading line shows the path you'll coast along, and the HUD says whether you're in orbit, falling, escaping or landed. You can land on any planet or moon, or hold position with the station-keeping thrusters. Near a planet, gravity follows patched conics, the approximation used to plan real missions: only that planet and its moons pull, and you're carried along with it. Without that, the Sun's tides at these compressed distances would tear apart any orbit wider than about a planet's diameter. Time slows to 2.4 hours/s while you fly, so the planets don't race past.
 - Toggles for orbit lines and labels, and a responsive layout.
 
 Sizes and distances are compressed so everything fits on screen. Periods and tilts are real.
@@ -42,6 +42,7 @@ npm run preview  # serve the production build locally
 | `A` / `D` or `←` / `→` | Turn (in the ship) |
 | `↑` / `↓` | Dive / climb (in the ship) |
 | `Shift` | Boost (in the ship) |
+| `X` | Hold position: cancel gravity and come to a stop (in the ship) |
 
 ## Project structure
 
@@ -54,7 +55,8 @@ npm run preview  # serve the production build locally
 | `src/objects/Moon.js` | A moon on its real orbit, clickable |
 | `src/ephemeris.js` | Where each moon is on its orbit for a given date |
 | `src/objects/AsteroidBelt.js` | Instanced asteroid belt |
-| `src/objects/Spaceship.js` | The flyable spaceship: model, arcade flight and collisions |
+| `src/objects/Spaceship.js` | The flyable spaceship: model, flight, collisions and landing, and its predicted path |
+| `src/gravity.js` | Gravity for the ship: each body's pull, spheres of influence, orbit state |
 | `src/objects/Stars.js` | Background starfield |
 | `src/shaders/planet.js` | Planet surface shader: image maps or procedural noise |
 | `src/shaders/eclipses.js` | Eclipse shadows between planets and their moons |

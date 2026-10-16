@@ -46,6 +46,26 @@ function showFlight(flying) {
   speed.dispatchEvent(new Event('input'))
 }
 
+const nameOf = (body) => (body.id === 'sun' ? 'the Sun' : body.data.name)
+
+/** What the ship is doing, relative to the body whose gravity holds it. */
+function flightStatus(system) {
+  const { ship } = system
+  const frame = ship.frameBody ?? system.sun
+  switch (ship.status) {
+    case 'landed':
+      return `Landed on ${nameOf(ship.landed)}`
+    case 'holding':
+      return `Holding position near ${nameOf(system.nearestBody())}`
+    case 'orbit':
+      return `In orbit round ${nameOf(frame)}`
+    case 'falling':
+      return `Falling toward ${nameOf(frame)}`
+    default:
+      return `Escaping ${nameOf(frame)}`
+  }
+}
+
 function formatSpeed(daysPerSecond) {
   if (daysPerSecond >= 365) return `${(daysPerSecond / 365.25).toFixed(daysPerSecond >= 3652 ? 0 : 1)} yr/s`
   if (daysPerSecond >= 1) return `${daysPerSecond.toFixed(daysPerSecond >= 10 ? 0 : 1)} days/s`
@@ -122,8 +142,8 @@ function setupControls(system) {
     if (system.flying) {
       speedBar.style.width = `${Math.min(100, system.ship.speedShare * 100).toFixed(1)}%`
       boost.hidden = !system.ship.boosting
-      const name = system.nearestBody().data.name
-      if (near.textContent !== name) near.textContent = name
+      const text = flightStatus(system)
+      if (near.textContent !== text) near.textContent = text
     }
     requestAnimationFrame(updateHud)
   }

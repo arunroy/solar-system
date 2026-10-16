@@ -8,6 +8,7 @@
 
 export const sun = {
   id: 'sun',
+  gravity: 274, // surface gravity, m/s²
   name: 'Sun',
   kind: 'G-type main-sequence star',
   color: '#ffb02e',
@@ -26,6 +27,7 @@ export const sun = {
 export const planets = [
   {
     id: 'mercury',
+    gravity: 3.7, // surface gravity, m/s²
     name: 'Mercury',
     kind: 'Terrestrial planet',
     color: '#a39b92',
@@ -52,6 +54,7 @@ export const planets = [
   },
   {
     id: 'venus',
+    gravity: 8.87, // surface gravity, m/s²
     name: 'Venus',
     kind: 'Terrestrial planet',
     color: '#e8d3a2',
@@ -79,6 +82,7 @@ export const planets = [
   },
   {
     id: 'earth',
+    gravity: 9.81, // surface gravity, m/s²
     name: 'Earth',
     kind: 'Terrestrial planet',
     color: '#4f9bff',
@@ -108,6 +112,7 @@ export const planets = [
       {
         name: 'Moon',
         id: 'moon',
+        gravity: 1.62, // surface gravity, m/s²
         kind: 'Moon of Earth',
         color: '#c9c9c9',
         description:
@@ -141,6 +146,7 @@ export const planets = [
   },
   {
     id: 'mars',
+    gravity: 3.71, // surface gravity, m/s²
     name: 'Mars',
     kind: 'Terrestrial planet',
     color: '#d9824a',
@@ -167,6 +173,7 @@ export const planets = [
   },
   {
     id: 'jupiter',
+    gravity: 24.79, // surface gravity, m/s²
     name: 'Jupiter',
     kind: 'Gas giant',
     color: '#e9d6b5',
@@ -190,6 +197,7 @@ export const planets = [
       {
         name: 'Io',
         id: 'io',
+        gravity: 1.8, // surface gravity, m/s²
         kind: 'Moon of Jupiter',
         color: '#e8c95a',
         description:
@@ -211,6 +219,7 @@ export const planets = [
       {
         name: 'Europa',
         id: 'europa',
+        gravity: 1.31, // surface gravity, m/s²
         kind: 'Moon of Jupiter',
         color: '#e6dccb',
         description:
@@ -232,6 +241,7 @@ export const planets = [
       {
         name: 'Ganymede',
         id: 'ganymede',
+        gravity: 1.43, // surface gravity, m/s²
         kind: 'Moon of Jupiter',
         color: '#bdb6aa',
         description:
@@ -253,6 +263,7 @@ export const planets = [
       {
         name: 'Callisto',
         id: 'callisto',
+        gravity: 1.24, // surface gravity, m/s²
         kind: 'Moon of Jupiter',
         color: '#a89d8c',
         description:
@@ -285,6 +296,7 @@ export const planets = [
   },
   {
     id: 'saturn',
+    gravity: 10.44, // surface gravity, m/s²
     name: 'Saturn',
     kind: 'Gas giant',
     color: '#ead7a4',
@@ -307,6 +319,7 @@ export const planets = [
         // Titan's thick orange haze hides its surface in visible light, so it is drawn as smooth haze
         name: 'Titan',
         id: 'titan',
+        gravity: 1.35, // surface gravity, m/s²
         kind: 'Moon of Saturn',
         color: '#e0a35a',
         description:
@@ -346,6 +359,7 @@ export const planets = [
   },
   {
     id: 'uranus',
+    gravity: 8.87, // surface gravity, m/s²
     name: 'Uranus',
     kind: 'Ice giant',
     color: '#a6e6ea',
@@ -373,6 +387,7 @@ export const planets = [
   },
   {
     id: 'neptune',
+    gravity: 11.15, // surface gravity, m/s²
     name: 'Neptune',
     kind: 'Ice giant',
     color: '#5b82f0',
