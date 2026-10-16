@@ -93,7 +93,7 @@ export const planets = [
     // (northern summer at the June solstice, when Earth is at longitude 270° and the Sun lies at 90°)
     poleLongitude: 90,
     // Sunlight reddened and bent into Earth's shadow by its atmosphere: the "blood moon" of a total lunar eclipse
-    shadowGlow: '#8a2a0c',
+    shadowGlow: '#d04a20',
     L0: 100.4645,
     surface: {
       type: 'earth',
