@@ -1,5 +1,6 @@
 // Spaceship sound, synthesised with the Web Audio API (no audio files): a rumbling main engine, a roaring
-// boost, hissing attitude thrusters and thuds on impact. Browsers only allow audio to start after a key
+// boost, hissing attitude thrusters and thuds on impact, and in the game missiles, plasma bolts, explosions
+// and the lock-on tone. Browsers only allow audio to start after a key
 // press or click, so it is created on the first launch.
 
 const MUTE_KEY = 'solar-system:muted'
@@ -152,6 +153,83 @@ export class ShipAudio {
     set(this.jets.gain.gain, puff)
 
     if (ship.impactSpeed > 0.3) this.impact(ship.impactSpeed)
+  }
+
+  get live() {
+    return this.ctx && this.playing
+  }
+
+  /** A short burst of the noise loop through a filter, with its own gain envelope. */
+  noiseBurst(filterType, from, to, peak, duration, start = this.ctx.currentTime) {
+    const ctx = this.ctx
+    const source = ctx.createBufferSource()
+    source.buffer = this.whiteNoise
+    const filter = ctx.createBiquadFilter()
+    filter.type = filterType
+    filter.frequency.setValueAtTime(from, start)
+    filter.frequency.exponentialRampToValueAtTime(to, start + duration)
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.0001, start)
+    gain.gain.exponentialRampToValueAtTime(peak, start + 0.01)
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+    source.connect(filter).connect(gain).connect(this.master)
+    source.start(start, Math.random())
+    source.stop(start + duration + 0.05)
+  }
+
+  /** A falling tone with a quick attack, `shape` an oscillator type. */
+  sweep(shape, from, to, peak, duration, start = this.ctx.currentTime) {
+    const ctx = this.ctx
+    const osc = ctx.createOscillator()
+    osc.type = shape
+    osc.frequency.setValueAtTime(from, start)
+    osc.frequency.exponentialRampToValueAtTime(to, start + duration)
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.0001, start)
+    gain.gain.exponentialRampToValueAtTime(peak, start + 0.005)
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+    osc.connect(gain).connect(this.master)
+    osc.start(start)
+    osc.stop(start + duration + 0.05)
+  }
+
+  /** A missile leaving the rail: a clunk and a rushing whoosh as its motor lights. */
+  missile() {
+    if (!this.live) return
+    this.sweep('triangle', 180, 60, 0.25, 0.12)
+    this.noiseBurst('bandpass', 2400, 450, 0.35, 0.7)
+  }
+
+  /** An invader's plasma bolt, quieter the further away it's fired. */
+  laser(distance) {
+    if (!this.live) return
+    const loudness = 1 / (1 + distance * 0.5)
+    if (loudness < 0.05) return
+    this.sweep('square', 1500, 260, 0.06 * loudness, 0.16)
+  }
+
+  /** An explosion: a deep boom and a crackling roar, `size` 1 for a ship, fainter with `distance`. */
+  explosion(distance, size = 1) {
+    if (!this.live) return
+    const loudness = Math.min(1, size / (1 + distance * 0.3))
+    if (loudness < 0.03) return
+    this.sweep('sine', 90, 28, 0.6 * loudness, 0.5 + size * 0.4)
+    this.noiseBurst('lowpass', 2200, 140, 0.45 * loudness, 0.6 + size * 0.5)
+  }
+
+  /** The hull taking a hit. */
+  hit(amount) {
+    if (!this.live) return
+    this.impact(1 + amount / 4)
+    this.sweep('sawtooth', 320, 110, 0.08, 0.18)
+  }
+
+  /** Two quick beeps: missile lock. */
+  lock() {
+    if (!this.live) return
+    const now = this.ctx.currentTime
+    this.sweep('sine', 1320, 1300, 0.08, 0.06, now)
+    this.sweep('sine', 1320, 1300, 0.08, 0.06, now + 0.09)
   }
 
   /** A thud, louder and deeper for harder hits. */

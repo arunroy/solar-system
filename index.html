@@ -29,6 +29,8 @@
       </label>
       <button id="today" class="text-btn" type="button">Today</button>
       <button id="fly" class="text-btn" type="button" aria-pressed="false" title="Fly a spaceship (F)">Fly</button>
+      <button id="play" class="text-btn" type="button" aria-pressed="false" title="Defend the solar system from invaders (G)">Defend</button>
+      <button id="difficulty" class="text-btn" type="button" title="Difficulty of the next game: Easy, Normal or Hard (L)">Normal</button>
       <div class="toggles">
         <label><input id="toggle-orbits" type="checkbox" checked /> Orbits</label>
         <label><input id="toggle-labels" type="checkbox" checked /> Labels</label>
@@ -68,6 +70,7 @@
         <kbd>W</kbd> engine · <kbd>S</kbd> back · <kbd>A</kbd>/<kbd>D</kbd> yaw · <kbd>↑</kbd>/<kbd>↓</kbd> pitch ·
         <kbd>Q</kbd>/<kbd>E</kbd> roll · <kbd>Shift</kbd> boost · <kbd>P</kbd>/<kbd>R</kbd> point prograde/retrograde ·
         <kbd>X</kbd> hold position · <kbd>Z</kbd> flight assist · <kbd>M</kbd> sound · <kbd>Esc</kbd> exit
+        <span class="flight__game-keys"> · <kbd>Space</kbd>/click fire missile · <kbd>G</kbd> quit game</span>
       </p>
     </section>
 
@@ -77,12 +80,41 @@
       <span id="marker-retrograde" class="marker marker--retrograde" title="Retrograde"></span>
     </div>
 
+    <section id="game" class="panel game" aria-label="Game" hidden>
+      <div class="game__stats">
+        <strong id="game-level"></strong>
+        <span>Wave <strong id="game-wave"></strong></span>
+        <span>Score <strong id="game-score"></strong></span>
+        <span>Best <strong id="game-best"></strong></span>
+        <span>Ships <strong id="game-lives"></strong></span>
+        <span>Invaders <strong id="game-left"></strong></span>
+      </div>
+      <div class="game__meters">
+        <span>Hull</span>
+        <span class="game__bar"><span id="game-hull"></span></span>
+        <span id="game-target"></span>
+        <span class="game__bar game__bar--planet"><span id="game-defences"></span></span>
+        <span>Missiles</span>
+        <span id="game-missiles" class="game__missiles"></span>
+      </div>
+    </section>
+
+    <div id="game-overlay" class="game-overlay" aria-hidden="true" hidden>
+      <span id="game-objective" class="objective"></span>
+      <span id="game-lock" class="lock"></span>
+    </div>
+    <div id="game-message" class="game-message" aria-live="polite" hidden>
+      <h2 id="game-title"></h2>
+      <p id="game-text"></p>
+    </div>
+    <div id="damage" class="damage" aria-hidden="true"></div>
+
     <nav id="dock" class="dock" aria-label="Celestial bodies"></nav>
 
     <p class="footnote">
       Sizes &amp; distances not to scale · Drag to orbit · Scroll to zoom · Click a planet ·
       <kbd>Space</kbd> pause · <kbd>Esc</kbd> overview · <kbd>0</kbd>–<kbd>8</kbd> jump ·
-      <kbd>F</kbd> fly
+      <kbd>F</kbd> fly · <kbd>G</kbd> defend · <kbd>L</kbd> difficulty
     </p>
 
     <script type="module" src="/src/main.js"></script>

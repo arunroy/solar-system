@@ -536,6 +536,15 @@ export class Spaceship {
     this.trajectory.visible = false
     this.active = false
     this.pressed.clear()
+    // Silence the engine and thrusters, which the sound follows
+    this.throttle = 0
+    this.rcs = 0
+    this.boosting = false
+  }
+
+  /** Go back to the saved flight assist setting (the game turns assist on without saving it). */
+  loadAssist() {
+    this.assist = readAssist()
   }
 
   held(action) {

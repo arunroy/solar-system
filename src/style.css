@@ -143,6 +143,11 @@ button {
 .text-btn:hover {
   background: rgba(255, 255, 255, 0.14);
 }
+.text-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  background: rgba(255, 255, 255, 0.06);
+}
 .speed {
   display: flex;
   align-items: center;
@@ -374,6 +379,195 @@ button {
   color: rgba(255, 255, 255, 0.55);
 }
 
+/* ---------- Game ---------- */
+.flight__game-keys[hidden] {
+  display: none;
+}
+.game {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(460px, calc(100vw - 2 * var(--gutter)));
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.game[hidden] {
+  display: none;
+}
+.game__stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.game__stats strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.game__meters {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 8px;
+}
+.game__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.game__bar span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #6fd88a, #c6f5cf);
+  transition: width 0.2s;
+}
+.game__bar--planet span {
+  background: linear-gradient(90deg, #6fb6ff, #c9e6ff);
+}
+.game__bar span.is-low {
+  background: linear-gradient(90deg, #ff4a3a, #ff9a6a);
+}
+.game__missiles {
+  grid-column: 2 / -1;
+  display: flex;
+  gap: 4px;
+}
+.game__missiles span {
+  width: 14px;
+  height: 5px;
+  border-radius: 2px;
+  background: #ffd38a;
+}
+.game__missiles span.is-empty {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Markers over the scene: invaders, the planet under attack, and the missile lock */
+.game-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.game-overlay[hidden],
+.game-overlay [hidden] {
+  display: none !important;
+}
+.enemy {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  color: #ff5544;
+}
+.enemy--raider {
+  color: #ffae3a;
+}
+/* In view: a small diamond round the invader */
+.enemy::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid currentColor;
+  transform: rotate(45deg) scale(0.75);
+}
+/* Out of view: an arrow at the screen edge pointing to it */
+.enemy.is-off::before {
+  border: 0;
+  transform: none;
+  background: currentColor;
+  clip-path: polygon(100% 50%, 0 0, 25% 50%, 0 100%);
+}
+.objective {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 0;
+  height: 0;
+  color: #9fd2ff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.objective > span:last-child {
+  position: absolute;
+  top: 12px;
+  text-shadow: 0 1px 4px #000;
+}
+.objective__arrow {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  left: 0;
+  top: 0;
+  background: currentColor;
+  clip-path: polygon(100% 50%, 0 0, 30% 50%, 0 100%);
+}
+.lock {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  color: #ffd38a;
+  background:
+    linear-gradient(currentColor, currentColor) 0 0 / 10px 2px no-repeat,
+    linear-gradient(currentColor, currentColor) 0 0 / 2px 10px no-repeat,
+    linear-gradient(currentColor, currentColor) 100% 0 / 10px 2px no-repeat,
+    linear-gradient(currentColor, currentColor) 100% 0 / 2px 10px no-repeat,
+    linear-gradient(currentColor, currentColor) 0 100% / 10px 2px no-repeat,
+    linear-gradient(currentColor, currentColor) 0 100% / 2px 10px no-repeat,
+    linear-gradient(currentColor, currentColor) 100% 100% / 10px 2px no-repeat,
+    linear-gradient(currentColor, currentColor) 100% 100% / 2px 10px no-repeat;
+}
+.lock.is-locked {
+  color: #ff4a3a;
+}
+.game-message {
+  position: fixed;
+  left: 50%;
+  top: 34%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 2 * var(--gutter)));
+  text-align: center;
+  pointer-events: none;
+  text-shadow: 0 2px 12px #000;
+}
+.game-message[hidden] {
+  display: none;
+}
+.game-message h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  letter-spacing: -0.01em;
+}
+.game-message p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+/* A red flash round the screen edges when the ship is hit */
+.damage {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: inset 0 0 140px rgba(255, 40, 30, 0.75);
+}
+
 /* ---------- Dock ---------- */
 .dock {
   position: fixed;
@@ -495,6 +689,10 @@ kbd {
   .flight {
     top: 76px;
     bottom: auto;
+  }
+  .game {
+    top: auto;
+    bottom: 190px;
   }
   .dock {
     bottom: var(--gutter);

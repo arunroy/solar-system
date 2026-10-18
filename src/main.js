@@ -1,5 +1,6 @@
 import './style.css'
 import { SolarSystem } from './SolarSystem.js'
+import { RACK, DIFFICULTIES } from './game.js'
 
 const $ = (selector) => document.querySelector(selector)
 
@@ -122,6 +123,115 @@ function flightReadouts(system) {
   return readouts
 }
 
+const EDGE = 30 // px: off-screen markers sit this far in from the edge of the screen
+
+/** Where to mark a point in the scene: on it if it's in view, otherwise at the screen edge in its direction. */
+function markerSpot(system, point) {
+  const p = system.screenPoint(point)
+  if (p.onScreen) return { ...p, angle: 0 }
+  const canvas = system.renderer.domElement
+  const cx = canvas.clientWidth / 2
+  const cy = canvas.clientHeight / 2
+  let dx = p.x - cx
+  let dy = p.y - cy
+  if (Math.abs(dx) + Math.abs(dy) < 1e-3) dy = 1 // dead behind: point down
+  const scale = Math.min((cx - EDGE) / Math.max(Math.abs(dx), 1e-6), (cy - EDGE) / Math.max(Math.abs(dy), 1e-6))
+  return { x: cx + dx * scale, y: cy + dy * scale, onScreen: false, angle: Math.atan2(dy, dx) }
+}
+
+/** The game's HUD: score and meters, invader markers, the missile lock, messages and the hit flash. */
+function gameHud(system) {
+  const { game } = system
+  const panel = $('#game')
+  const overlay = $('#game-overlay')
+  const messageEl = $('#game-message')
+  const title = $('#game-title')
+  const text = $('#game-text')
+  const play = $('#play')
+  const damage = $('#damage')
+  const keys = $('.flight__game-keys')
+  const difficulty = $('#difficulty')
+  const stats = Object.fromEntries(['level', 'wave', 'score', 'best', 'lives', 'left'].map((key) => [key, $(`#game-${key}`)]))
+  const hull = $('#game-hull')
+  const defences = $('#game-defences')
+  const targetName = $('#game-target')
+  const pips = Array.from({ length: RACK }, () => $('#game-missiles').appendChild(el('span', '')))
+  const lock = $('#game-lock')
+  const objective = $('#game-objective')
+  const objectiveArrow = objective.appendChild(el('span', ''))
+  objectiveArrow.className = 'objective__arrow'
+  const objectiveName = objective.appendChild(el('span', ''))
+  const markers = []
+
+  const setText = (node, value) => {
+    if (node.textContent !== value) node.textContent = value
+  }
+  const moveTo = (node, spot, rotate = true) => {
+    node.style.transform = `translate(${spot.x.toFixed(1)}px, ${spot.y.toFixed(1)}px)${rotate ? ` rotate(${spot.angle.toFixed(3)}rad)` : ''}`
+  }
+
+  return () => {
+    const showing = game.active && system.flying
+    panel.hidden = !showing
+    overlay.hidden = !showing
+    keys.hidden = !game.active
+    setText(play, !game.active ? 'Defend' : game.over ? 'Play again' : 'Quit game')
+    play.setAttribute('aria-pressed', String(game.active))
+    // The choice is for the next game, so it's locked while one is being played
+    setText(difficulty, DIFFICULTIES[game.difficulty].name)
+    difficulty.disabled = !game.canChangeDifficulty
+    const message = showing ? game.message : null
+    messageEl.hidden = !message
+    if (message) {
+      setText(title, message.title)
+      setText(text, message.text)
+    }
+    damage.style.opacity = showing ? Math.max(0, 1 - (game.time - game.hurtAt) / 0.6).toFixed(2) : '0'
+    if (!showing) return
+
+    setText(stats.level, game.level.name)
+    setText(stats.wave, String(game.wave))
+    setText(stats.score, game.score.toLocaleString('en'))
+    setText(stats.best, Math.max(game.highScore, game.score).toLocaleString('en'))
+    setText(stats.lives, String(game.lives))
+    setText(stats.left, String(game.invadersLeft))
+    hull.style.width = `${Math.max(0, game.hull).toFixed(1)}%`
+    hull.classList.toggle('is-low', game.hull < 30)
+    setText(targetName, game.target?.data.name ?? '—')
+    defences.style.width = `${game.defences.toFixed(1)}%`
+    defences.classList.toggle('is-low', game.defences < 30)
+    pips.forEach((pip, i) => pip.classList.toggle('is-empty', i >= game.rack))
+
+    // A marker on each invader, or at the edge of the screen pointing the way to it
+    game.invaders.forEach((invader, i) => {
+      const marker = markers[i] ?? (markers[i] = overlay.appendChild(el('span', '')))
+      const spot = markerSpot(system, invader.position)
+      marker.hidden = false
+      marker.className = `enemy enemy--${invader.kind}${spot.onScreen ? '' : ' is-off'}`
+      moveTo(marker, spot)
+    })
+    for (let i = game.invaders.length; i < markers.length; i++) markers[i].hidden = true
+
+    // The planet under attack, when it's out of view
+    const target = game.target && markerSpot(system, game.target.position)
+    objective.hidden = !target || target.onScreen
+    if (!objective.hidden) {
+      moveTo(objective, target, false)
+      objectiveArrow.style.transform = `rotate(${target.angle.toFixed(3)}rad)`
+      setText(objectiveName, game.target.data.name)
+    }
+
+    // Brackets round the invader the nose is on, closing in as the lock builds
+    const locked = game.lock.invader
+    const spot = locked && system.ship.active ? system.screenPoint(locked.position) : null
+    lock.hidden = !spot?.onScreen
+    if (!lock.hidden) {
+      lock.style.transform = `translate(${spot.x.toFixed(1)}px, ${spot.y.toFixed(1)}px) scale(${(2 - game.lock.progress).toFixed(2)})`
+      lock.classList.toggle('is-locked', game.lock.locked)
+    }
+  }
+}
+
 function formatSpeed(daysPerSecond) {
   if (daysPerSecond >= 365) return `${(daysPerSecond / 365.25).toFixed(daysPerSecond >= 3652 ? 0 : 1)} yr/s`
   if (daysPerSecond >= 1) return `${daysPerSecond.toFixed(daysPerSecond >= 10 ? 0 : 1)} days/s`
@@ -167,9 +277,12 @@ function setupControls(system) {
     e.currentTarget.blur()
   })
   const assist = $('#flight-assist')
+  // Also called from the HUD loop, as the game switches assist on by itself
   const showAssist = () => {
+    const text = system.ship.assist ? 'Assist on' : 'Assist off'
+    if (assist.textContent === text) return
     assist.setAttribute('aria-pressed', String(system.ship.assist))
-    assist.textContent = system.ship.assist ? 'Assist on' : 'Assist off'
+    assist.textContent = text
   }
   const toggleAssist = () => {
     system.ship.setAssist(!system.ship.assist)
@@ -183,6 +296,18 @@ function setupControls(system) {
   $('#fly').addEventListener('click', (e) => {
     toggleFlying()
     e.currentTarget.blur() // so Space and the arrow keys go to the ship, not the button
+  })
+  // G starts a game, quits one in progress, or after game over plays again
+  const { game } = system
+  const toggleGame = () => (game.active && !game.over ? system.stopFlying() : game.start())
+  $('#play').addEventListener('click', (e) => {
+    toggleGame()
+    e.currentTarget.blur()
+  })
+  // L (or the button) steps through the difficulties, between games
+  $('#difficulty').addEventListener('click', (e) => {
+    game.cycleDifficulty()
+    e.currentTarget.blur()
   })
 
   const dock = $('#dock')
@@ -200,7 +325,7 @@ function setupControls(system) {
     if (e.target.matches('input, textarea')) return
     if (e.code === 'Space') {
       e.preventDefault()
-      togglePause()
+      if (!game.active) togglePause() // in the game, Space fires
     } else if (e.key === 'Escape') {
       if (system.flying) system.stopFlying()
       else system.clearFocus()
@@ -210,7 +335,11 @@ function setupControls(system) {
       toggleSound()
     } else if (e.code === 'KeyZ' && system.flying && !e.ctrlKey && !e.metaKey && !e.altKey) {
       toggleAssist()
-    } else if (/^[0-8]$/.test(e.key)) {
+    } else if (e.code === 'KeyG' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      toggleGame()
+    } else if (e.code === 'KeyL' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      game.cycleDifficulty()
+    } else if (/^[0-8]$/.test(e.key) && !game.active) {
       system.focusByIndex(Number(e.key))
     }
   })
@@ -232,6 +361,7 @@ function setupControls(system) {
     marker.hidden = !point
     if (point) marker.style.transform = `translate(${point.x.toFixed(1)}px, ${point.y.toFixed(1)}px)`
   }
+  const updateGameHud = gameHud(system)
   let shown = ''
   const updateHud = () => {
     const date = system.date
@@ -254,7 +384,9 @@ function setupControls(system) {
       place(nose, ship.forward)
       place(prograde, moving ? ship.velocity.clone().normalize() : null)
       place(retrograde, moving ? ship.velocity.clone().normalize().negate() : null)
+      showAssist()
     }
+    updateGameHud()
     requestAnimationFrame(updateHud)
   }
   updateHud()

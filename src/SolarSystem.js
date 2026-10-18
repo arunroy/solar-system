@@ -12,6 +12,7 @@ import { Spaceship } from './objects/Spaceship.js'
 import { Gravity } from './gravity.js'
 import { RingCollider, BeltCollider } from './colliders.js'
 import { ShipAudio } from './audio.js'
+import { Game } from './game.js'
 import { createStars } from './objects/Stars.js'
 import { textureManager } from './shaders/textures.js'
 import { sun as sunData, planets as planetData, asteroidBelt } from './data.js'
@@ -48,6 +49,7 @@ export class SolarSystem {
     this.hoverPoint = new THREE.Vector3()
     this.flying = false
     this.chaseOffset = new THREE.Vector3()
+    this.shake = 0 // camera shake from hits and explosions, 0…1
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
     container.append(this.renderer.domElement)
@@ -103,6 +105,8 @@ export class SolarSystem {
     for (const body of clickable) {
       body.label.element.addEventListener('click', () => this.focusOn(body))
     }
+
+    this.game = new Game(this)
 
     this.composer = new EffectComposer(this.renderer)
     this.composer.addPass(new RenderPass(this.scene, this.camera))
@@ -251,16 +255,21 @@ export class SolarSystem {
     if (body) this.focusOn(body)
   }
 
-  /** Hand the camera to the spaceship, launched beside the body in focus (or Earth). */
-  startFlying() {
-    if (this.flying) return
-    const near = this.focus ?? this.planets.find((planet) => planet.id === 'earth')
+  /** Put the ship out beside `near`, on its Sun-facing side, off to one side and a little above, looking at it. */
+  launchShip(near) {
     const center = near.position.clone()
-    // Start on the Sun-facing side, off to one side and a little above, looking at the body
     const toSun = near === this.sun ? new THREE.Vector3(0, 0, 1) : center.clone().negate().normalize()
     const side = new THREE.Vector3().crossVectors(UP, toSun).normalize()
     const direction = toSun.multiplyScalar(0.6).add(side.multiplyScalar(0.7)).add(new THREE.Vector3(0, 0.2, 0)).normalize()
     this.ship.launch(center.clone().addScaledVector(direction, near.radius * 3 + 0.6), center, this.gravity)
+    this.chaseOffset.copy(CHASE_OFFSET).applyQuaternion(this.ship.group.quaternion)
+    this.camera.up.copy(this.ship.up)
+  }
+
+  /** Hand the camera to the spaceship, launched beside `near` (by default the body in focus, or Earth). */
+  startFlying(near = this.focus ?? this.planets.find((planet) => planet.id === 'earth')) {
+    if (this.flying) return
+    this.launchShip(near)
 
     this.focus = null
     this.flight = null
@@ -272,7 +281,6 @@ export class SolarSystem {
     this.controls.enabled = false
     this.camera.near = 0.01 // the chase camera sits a fraction of a unit from the ship
     this.camera.updateProjectionMatrix()
-    this.chaseOffset.copy(CHASE_OFFSET).applyQuaternion(this.ship.group.quaternion)
     this.updateChaseCamera(0)
     this.shipAudio.start()
     this.onFlyChange(true)
@@ -281,7 +289,9 @@ export class SolarSystem {
   /** Back to the orbit camera, centred where the ship was. */
   stopFlying() {
     if (!this.flying) return
+    this.game.stop()
     this.flying = false
+    this.shake = 0
     this.ship.park()
     this.shipAudio.stop()
     this.controls.target.copy(this.ship.position)
@@ -303,6 +313,24 @@ export class SolarSystem {
     if (point.z > 1) return null
     const canvas = this.renderer.domElement
     return { x: ((point.x + 1) / 2) * canvas.clientWidth, y: ((1 - point.y) / 2) * canvas.clientHeight }
+  }
+
+  /**
+   * Where a point in the scene appears on screen, in CSS pixels, and whether it's in view. A point behind
+   * the camera is put back on the side it's really on (projection mirrors it), so it says which way to turn.
+   */
+  screenPoint(point) {
+    const p = point.clone().applyMatrix4(this.camera.matrixWorldInverse)
+    const behind = p.z > 0
+    p.applyMatrix4(this.camera.projectionMatrix)
+    if (behind) p.multiplyScalar(-1)
+    const canvas = this.renderer.domElement
+    return {
+      x: ((p.x + 1) / 2) * canvas.clientWidth,
+      y: ((1 - p.y) / 2) * canvas.clientHeight,
+      onScreen: !behind && Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1,
+      behind,
+    }
   }
 
   /** The body whose surface is closest to the ship. */
@@ -329,6 +357,11 @@ export class SolarSystem {
     // Roll with the ship, so its "up" stays up on screen
     this.camera.up.lerp(ship.up, dt ? ease : 1).normalize()
     this.camera.lookAt(ship.position.clone().addScaledVector(ship.forward, 0.4))
+    // Shake from hits and nearby explosions, dying away over half a second or so
+    if (this.shake > 0.001) {
+      this.camera.position.add(new THREE.Vector3().randomDirection().multiplyScalar(this.shake * this.shake * 0.025))
+      this.shake *= Math.exp(-5 * dt)
+    }
     // Widen the view while boosting, for a sense of speed
     const fov = THREE.MathUtils.damp(this.camera.fov, FOV + (ship.boosting ? 12 : 0), 3, dt)
     if (Math.abs(fov - this.camera.fov) > 0.01) {
@@ -347,6 +380,7 @@ export class SolarSystem {
     this.belt.update(this.days, dt, this.elapsed)
     this.gravity.update(dt)
     this.ship.update(dt, this.gravity, this.solidBodies, this.obstacles)
+    this.game.update(dt)
     if (this.flying) this.shipAudio.update(this.ship)
   }
 
